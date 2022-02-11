@@ -5,14 +5,12 @@ import Layout from "../components/layouts/article";
 import Section from "../components/section";
 import Paragraph from "../components/paragraph"
 import { BioSection, BioYear } from "../components/bio";
-import { GridItem } from "../components/grid-item";
 import {
     IoLogoTwitter,
     IoLogoInstagram,
     IoLogoGithub,
     IoLogoFacebook
 } from 'react-icons/io5';
-import thumbYouTube from '../public/images/links/youtube.png'
 
 const Page = () => {
     return (
@@ -129,9 +127,6 @@ const Page = () => {
                     </ListItem>
                 </List>
 
-                <SimpleGrid columns={[1,2,2]} gap={6}>
-                    <GridItem href="https://www.github.com/JeronOkkers" title="Github" thumbnail={thumbYouTube}>My Github</GridItem>
-                </SimpleGrid>
             </Section>
         </Container>
         </Layout>

@@ -4,10 +4,10 @@ import { WorkGridItem } from '../components/grid-item';
 import Layout from '../components/layouts/article';
 
 import thumbInkdrop from '../public/images/works/inkdrop_eyecatch.png';
-import thumbWalknote from '../public/images/works/walknote_eyecatch.png';
 import thumbMenkiki from '../public/images/works/menkiki_eyecatch.png';
 import thumbTour from '../public/images/works/modetokyo_eyecatch.png';
 import thumbStyly from '../public/images/works/styly_eyecatch.png';
+import thumbPortfolio from '../public/images/works/portfolio,png.png'
 
 const Works = () => {
     return (
@@ -19,13 +19,13 @@ const Works = () => {
 
                 <SimpleGrid columns={[1,1,2]} gap={6}>
                     <Section>
-                        <WorkGridItem id="inkdrop" title="inkdrop" thumbnail={thumbInkdrop}>
-                                A markdown note-taking app with 100+ encrypted data sync support 
+                        <WorkGridItem id="inkdrop" title="DailyDare" thumbnail={thumbInkdrop}>
+                        A Markdown Todolist cross-platform still in development. 
                         </WorkGridItem>
                     </Section>
                     <Section>
-                        <WorkGridItem id="walknote" title="walknote" thumbnail={thumbWalknote}>
-                                Music recommendation  app for ios
+                        <WorkGridItem id="portfolio" title="Portfolio Nextjs" thumbnail={thumbPortfolio}>
+                        My personal portfolio built using nextjs and react.
                         </WorkGridItem>
                     </Section>
                     <Section>

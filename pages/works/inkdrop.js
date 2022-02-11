@@ -16,17 +16,17 @@ const Work = () => (
       <List ml={4} my={4}>
         <ListItem>
           <Meta>Website</Meta>
-          <Link href="https://www.todolist.expo/">
+          <Link href="https://expo.dev/accounts/jeronokkers/projects/Todolist/builds/16dfc7a2-e0ab-4488-b434-85ca09edf4c5">
           https://www.todolist.expo/ <ExternalLinkIcon mx="2px" />
           </Link>
         </ListItem>
         <ListItem>
           <Meta>Platform</Meta>
-          <span>Windows/macOS/Linux/iOS/Android</span>
+          <span>Android/iOS</span>
         </ListItem>
         <ListItem>
           <Meta>Stack</Meta>
-          <span>NodeJS, Electron, React Native</span>
+          <span>React Native, Firebase, Django</span>
         </ListItem>
         {/* <ListItem>
           <Meta>Blogpost</Meta>

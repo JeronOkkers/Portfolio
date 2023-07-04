@@ -11,13 +11,16 @@ const Work = () => (
         DailyDare <Badge>2020-</Badge>
       </Title>
       <P>
-        A Markdown Todolist cross-platform still in development updates happening daily and user auth already added and working but will change to dango.
+        Responsive animated cross-platform todoapp still in development(trying
+        to make it more of my own) updates coming occasionally and still
+        debating if i should add user auth to this version but might add a new
+        feature called priority task.
       </P>
       <List ml={4} my={4}>
         <ListItem>
           <Meta>Website</Meta>
-          <Link href="https://expo.dev/accounts/jeronokkers/projects/Todolist/builds/16dfc7a2-e0ab-4488-b434-85ca09edf4c5">
-          https://www.todolist.expo/ <ExternalLinkIcon mx="2px" />
+          <Link href="https://www.inkdrop.app/">
+            https://www.todolist.expo/ <ExternalLinkIcon mx="2px" />
           </Link>
         </ListItem>
         <ListItem>
@@ -28,13 +31,13 @@ const Work = () => (
           <Meta>Stack</Meta>
           <span>React Native, Firebase, Django</span>
         </ListItem>
-        {/* <ListItem>
+        <ListItem>
           <Meta>Blogpost</Meta>
           <Link href="https://blog.inkdrop.app/how-ive-attracted-the-first-500-paid-users-for-my-saas-that-costs-5-mo-7a5b94b8e820">
             How I’ve Attracted The First 500 Paid Users For My SaaS That Costs
             $5/mo <ExternalLinkIcon mx="2px" />
           </Link>
-        </ListItem> */}
+        </ListItem>
       </List>
 
       <WorkImage src="/images/works/inkdrop_01.png" alt="Inkdrop" />

@@ -7,7 +7,7 @@ import thumbInkdrop from '../public/images/works/inkdrop_eyecatch.png'
 import thumbMenkiki from '../public/images/works/menkiki_eyecatch.png'
 import thumbTour from '../public/images/works/modetokyo_eyecatch.png'
 import thumbStyly from '../public/images/works/styly_eyecatch.png'
-import thumbPortfolio from '../public/images/works/portfolio,png.png'
+import thumbPortfolio from '../public/images/works/portfolio.png'
 
 const Works = () => {
   return (

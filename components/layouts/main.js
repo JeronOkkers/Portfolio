@@ -1,6 +1,5 @@
 import Head from 'next/head'
 import Navbar from '../navbar'
-import NoSsr from '../no-ssr'
 import { Box, Container } from '@chakra-ui/react'
 import VoxelDog from '../voxel-dog'
 

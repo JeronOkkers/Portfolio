@@ -24,7 +24,7 @@ const VoxelDog = () => {
 
   const handleWindowResize = useCallback(() => {
     const { current: container } = refContainer
-    if (container && renderer) {
+    if (container && renderer && _camera) {
       const scW = container.clientWidth
       const scH = container.clientHeight
 
@@ -36,9 +36,16 @@ const VoxelDog = () => {
 
   useEffect(() => {
     const { current: container } = refContainer
-    if (container && !renderer) {
+    if (!container) return
+
+    const waitForSizeAndInit = () => {
       const scW = container.clientWidth
       const scH = container.clientHeight
+
+      if (scW === 0 || scH === 0) {
+        setTimeout(waitForSizeAndInit, 100)
+        return
+      }
 
       const renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -47,7 +54,9 @@ const VoxelDog = () => {
       renderer.setPixelRatio(window.devicePixelRatio)
       renderer.setSize(scW, scH)
       renderer.outputEncoding = THREE.sRGBEncoding
-      container.appendChild(renderer.domElement)
+      if (container.children.length === 1) {
+        container.appendChild(renderer.domElement)
+      }
       setRenderer(renderer)
 
       const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.01, 50000)
@@ -55,8 +64,21 @@ const VoxelDog = () => {
       camera.lookAt(target)
       setCamera(camera)
 
-      const ambientLight = new THREE.AmbientLight(0xcccccc, 1)
-      scene.add(ambientLight)
+        // Ambient light for general visibility
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+        scene.add(ambientLight)
+
+        // Directional light to simulate sunlight
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+        directionalLight.position.set(5, 10, 5)
+        directionalLight.castShadow = true
+        scene.add(directionalLight)
+
+        // Optional: Hemisphere light for soft sky-like glow
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.3)
+        hemiLight.position.set(0, 20, 0)
+        scene.add(hemiLight)
+
 
       const controls = new OrbitControls(camera, renderer.domElement)
       controls.autoRotate = true
@@ -105,11 +127,14 @@ const VoxelDog = () => {
 
       animate()
 
+      // Cleanup on unmount
       return () => {
         cancelAnimationFrame(req)
         renderer.dispose()
       }
     }
+
+    waitForSizeAndInit()
   }, [])
 
   useEffect(() => {
@@ -136,7 +161,7 @@ const VoxelDog = () => {
           position="absolute"
           left="50%"
           top="50%"
-          ml="calc(0px - var(--spinner-size) / 2)"
+          ml="calc(0px - var(--spinner  -size) / 2)"
           mt="calc(0px - var(--spinner-size))"
         />
       )}

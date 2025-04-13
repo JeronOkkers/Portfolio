@@ -21,7 +21,7 @@ const Logo = () => {
     const footPrintImg = `/images/footprint${useColorModeValue('', '-dark')}.png`
 
     return (
-        <Link href="/" legacyBehavior>
+        (<Link href="/" scroll={false}>
             <LogoBox>
                 <Image src={footPrintImg} width={20} height={20} alt="logo" />
                 <Text
@@ -32,7 +32,7 @@ const Logo = () => {
                     Jeron Okkers
                 </Text>
             </LogoBox>
-        </Link>
+        </Link>)
     );
 }
 

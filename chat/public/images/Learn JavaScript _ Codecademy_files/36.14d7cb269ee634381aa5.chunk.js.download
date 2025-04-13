@@ -1,0 +1,2 @@
+(window.__LOADABLE_LOADED_CHUNKS__=window.__LOADABLE_LOADED_CHUNKS__||[]).push([[36],{N1om:function(_,o,n){var L=n("sgoq")((function(_,o,n){return _+(n?"-":"")+o.toLowerCase()}));_.exports=L}}]);
+//# sourceMappingURL=36.14d7cb269ee634381aa5.chunk.js.map

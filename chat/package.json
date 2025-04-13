@@ -1,0 +1,38 @@
+{
+  "name": "portfolio",
+  "version": "1.0.0",
+  "description": "Personal portfolio website by Jeron Okkers",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start",
+    "prettier": "prettier --write .",
+    "lint": "next lint"
+  },
+  "keywords": [],
+  "author": "Jeron Okkers",
+  "license": "MIT",
+  "dependencies": {
+    "@chakra-ui/icons": "^2.2.4",
+    "@chakra-ui/react": "^3.15.1",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "chart.js": "^4.4.8",
+    "framer-motion": "^12.6.5",
+    "googleapis": "^148.0.0",
+    "next": "^15.3.0",
+    "react": "^19.1.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
+    "three": "^0.177.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "eslint": "^9.45.0",
+    "eslint-config-next": "^15.3.0",
+    "prettier": "^3.5.3"
+  }
+}

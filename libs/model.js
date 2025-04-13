@@ -11,7 +11,8 @@ export function loadGLTFModel(
     const loader = new GLTFLoader()
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath(
-      'C:/Users/okker/Development/Portfolio/libs/gltf/'
+      // 'C:/Users/okker/Development/Portfolio/libs/gltf/'
+      '/draco/gltf'
     )
     loader.setDRACOLoader(dracoLoader)
 

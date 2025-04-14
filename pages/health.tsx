@@ -93,12 +93,27 @@ const HealthPage = () => {
   // --- Data Parsers ---
   const getTotalSteps = () => {
     const points = fetchedData?.stepsData?.point || []
-    return points.reduce(
-      (acc: number, curr: DataPoint) =>
-        acc + parseInt(curr.value[0]?.intVal || '0', 10),
-      0
-    )
+    const today = new Date()
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
+    const endOfDay = startOfDay + 24 * 60 * 60 * 1000
+
+    return points.reduce((acc: number, curr: DataPoint) => {
+      const startTimeMs = parseInt(curr.startTimeNanos, 10) / 1e6
+      if (startTimeMs >= startOfDay && startTimeMs < endOfDay) {
+        return acc + parseInt(curr.value[0]?.intVal || '0', 10)
+      }
+      return acc
+    }, 0)
   }
+
+  const getMostRecentHeartRate = () => {
+    const points = fetchedData?.heartRateData?.point || []
+    if (points.length === 0) return 0
+    // Assuming the data is sorted by time, the most recent will be the last element.
+    const mostRecentPoint = points[points.length - 1]
+    return mostRecentPoint.value[0]?.fpVal || 0
+  }
+
 
   const getAverageHeartRate = () => {
     const points = fetchedData?.heartRateData?.point || []
@@ -231,6 +246,7 @@ const HealthPage = () => {
 
   const stepsToday = getTotalSteps()
   const avgHR = getAverageHeartRate()
+  const rctHR = getMostRecentHeartRate()
   const restingHR = getAverageRestingHr()
   const totalSleepMs = getTotalSleepDuration()
   const avgOxygen = getAverageOxygenSaturation()
@@ -273,6 +289,13 @@ const HealthPage = () => {
             <SimpleGrid columns={[1, 2, 4]} spacing={4} mb={8}>
               <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
                 <Text fontWeight="bold" mb={1} color={textColor}>Heart Rate</Text>
+                <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
+                  {rctHR ? `${rctHR.toFixed(1)} bpm` : 'No data'}
+                </Text>
+              </Box>
+
+              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
+                <Text fontWeight="bold" mb={1} color={textColor}>Avg Heart Rate</Text>
                 <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
                   {avgHR ? `${avgHR.toFixed(1)} bpm` : 'No data'}
                 </Text>

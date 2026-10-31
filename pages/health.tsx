@@ -97,7 +97,15 @@ const series = (points: SeriesPoint[], offset: number) => ({
   values: points.map(p => p.v)
 })
 
-const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => void }) => {
+const Dashboard = ({
+  data,
+  onRefresh,
+  refreshing
+}: {
+  data: HealthSummary
+  onRefresh: () => void
+  refreshing: boolean
+}) => {
   const off = data.timezoneOffsetMinutes
   const accent =
     typeof window !== 'undefined'
@@ -333,8 +341,8 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
         {fmtTime(data.generatedAt, off)} SAST
         {data.warnings.length > 0 && ` · unavailable: ${data.warnings.join(', ')}`}
         {' · '}
-        <Button size="xs" variant="link" onClick={onRefresh}>
-          refresh
+        <Button size="xs" variant="link" onClick={onRefresh} isDisabled={refreshing}>
+          {refreshing ? 'refreshing…' : 'refresh'}
         </Button>
       </Text>
     </>
@@ -345,18 +353,27 @@ const HealthPage = () => {
   const [data, setData] = useState<HealthResponse | null>(null)
   const [error, setError] = useState(false)
 
-  const load = async () => {
+  const [refreshing, setRefreshing] = useState(false)
+
+  // fresh = true → skip the shared cache (refresh button). Otherwise use it.
+  const load = async (fresh = false) => {
     setError(false)
+    if (fresh) setRefreshing(true)
     try {
-      const res = await fetch('/api/health/summary')
+      const res = await fetch(`/api/health/summary${fresh ? '?fresh=1' : ''}`, { cache: 'no-store' })
       setData(await res.json())
     } catch {
       setError(true)
+    } finally {
+      setRefreshing(false)
     }
   }
 
   useEffect(() => {
     load()
+    // keep the page current while it's open
+    const id = setInterval(() => load(), 2 * 60 * 1000)
+    return () => clearInterval(id)
   }, [])
 
   return (
@@ -386,7 +403,7 @@ const HealthPage = () => {
             </Card>
           )}
           {data && data.configured === true && (
-            <Dashboard data={data as HealthSummary} onRefresh={load} />
+            <Dashboard data={data as HealthSummary} onRefresh={() => load(true)} refreshing={refreshing} />
           )}
         </Section>
       </Container>

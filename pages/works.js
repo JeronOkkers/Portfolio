@@ -1,78 +1,99 @@
-// pages/works.js
-import { Container, Heading, SimpleGrid } from '@chakra-ui/react'
+import {
+  Container,
+  Heading,
+  SimpleGrid,
+  Box,
+  Text,
+  Link,
+  Divider
+} from '@chakra-ui/react'
+import { ExternalLinkIcon } from '@chakra-ui/icons'
 import Section from '../components/section'
-import { WorkGridItem } from '../components/grid-item'
 import Layout from '../components/layouts/article'
-
-// Import your static images so that Next.js can automatically generate blurDataURL for them.
-import thumbDailyDare from '../public/images/works/Animatedtodo.png'
-import thumbPortfolio from '../public/images/works/portfolio.png'
-import thumbMenkiki from '../public/images/works/menkiki_eyecatch.png'
-import defaultThumb from '../public/images/works/default.png'  // Optional default image
-
-// Map repository names (or a chosen key) to their corresponding thumbnail.
-// Ensure the keys match your repo names (case-insensitive).
-const images = {
-  dailydare: thumbDailyDare,
-  portfolio: thumbPortfolio,
-  menkiki: thumbMenkiki,
-}
+import { ProjectCard } from '../components/project-card'
+import projects from '../data/projects'
 
 const Works = ({ repos }) => {
+  const current = projects.filter(p => p.status !== 'archived')
+  const earlier = projects.filter(p => p.status === 'archived')
+
   return (
-    <Layout>
+    <Layout title="Works">
       <Container>
         <Heading as="h3" fontSize={20} mb={4}>
           Works
         </Heading>
 
-        <SimpleGrid columns={[1, 1, 2]} gap={6}>
-          {repos.map((repo) => {
-            // Try to get a thumbnail image from our mapping, or fallback to a default image.
-            const thumbnail =
-              images[repo.name.toLowerCase()] || defaultThumb || thumbPortfolio
-            return (
-              <Section key={repo.id}>
-                <WorkGridItem
-                  id={repo.name}
-                  title={repo.name}
-                  thumbnail={thumbnail}
-                  href={repo.html_url} // Optional, if you want to link directly to the repo.
-                >
-                  {repo.description || 'No description provided'}
-                </WorkGridItem>
-              </Section>
-            )
-          })}
-        </SimpleGrid>
+        <Section delay={0.1}>
+          <SimpleGrid columns={[1, 1, 2]} gap={6}>
+            {current.map(p => (
+              <ProjectCard key={p.slug} project={p} />
+            ))}
+          </SimpleGrid>
+        </Section>
+
+        <Section delay={0.2}>
+          <Divider my={6} />
+          <Heading as="h3" fontSize={20} mb={4}>
+            Earlier projects
+          </Heading>
+          <SimpleGrid columns={[1, 1, 2]} gap={6}>
+            {earlier.map(p => (
+              <ProjectCard key={p.slug} project={p} />
+            ))}
+          </SimpleGrid>
+        </Section>
+
+        {repos.length > 0 && (
+          <Section delay={0.3}>
+            <Divider my={6} />
+            <Heading as="h3" fontSize={20} mb={4}>
+              More on GitHub
+            </Heading>
+            <SimpleGrid columns={[1, 2]} gap={3}>
+              {repos.map(r => (
+                <Box key={r.id}>
+                  <Link href={r.html_url} target="_blank" fontWeight="bold">
+                    {r.name} <ExternalLinkIcon mx="2px" />
+                  </Link>
+                  <Text fontSize="sm" opacity={0.75}>
+                    {r.description || r.language || ''}
+                  </Text>
+                </Box>
+              ))}
+            </SimpleGrid>
+          </Section>
+        )}
       </Container>
     </Layout>
   )
 }
 
 export async function getStaticProps() {
-  // Replace with your GitHub username.
-  const res = await fetch('https://api.github.com/users/jeronOkkers/repos')
-  const data = await res.json()
-
-  // Filter out forked repos or customize the filter as needed.
-  const repos = data.filter((repo) => !repo.fork)
-
-  // Map repositories to only the needed fields.
-  const enhancedRepos = repos.map((repo) => ({
-    id: repo.id,
-    name: repo.name,
-    description: repo.description,
-    html_url: repo.html_url,
-  }))
-
-  return {
-    props: {
-      repos: enhancedRepos,
-    },
-    // Revalidate once per day (86400 seconds)
-    revalidate: 86400,
+  let repos = []
+  try {
+    const res = await fetch(
+      'https://api.github.com/users/JeronOkkers/repos?sort=pushed&per_page=12',
+      { headers: { Accept: 'application/vnd.github+json' } }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      repos = data
+        .filter(r => !r.fork && !r.archived)
+        .slice(0, 8)
+        .map(r => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          language: r.language,
+          html_url: r.html_url
+        }))
+    }
+  } catch (e) {
+    // GitHub rate-limited or offline — the curated list still renders.
   }
+
+  return { props: { repos }, revalidate: 86400 }
 }
 
 export default Works

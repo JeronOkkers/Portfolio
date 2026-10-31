@@ -1,6 +1,6 @@
+import SectionHeading from '../components/section-heading'
 import {
   Container,
-  Heading,
   SimpleGrid,
   Box,
   Text,
@@ -20,23 +20,21 @@ const Works = ({ repos }) => {
   return (
     <Layout title="Works">
       <Container>
-        <Heading as="h3" fontSize={20} mb={4}>
-          Works
-        </Heading>
+        <SectionHeading eyebrow="Work">
+          Things I&apos;ve <em>built</em>.
+        </SectionHeading>
 
         <Section delay={0.1}>
           <SimpleGrid columns={[1, 1, 2]} gap={6}>
-            {current.map(p => (
-              <ProjectCard key={p.slug} project={p} />
+            {current.map((p, i) => (
+              <ProjectCard key={p.slug} project={p} index={i} />
             ))}
           </SimpleGrid>
         </Section>
 
         <Section delay={0.2}>
-          <Divider my={6} />
-          <Heading as="h3" fontSize={20} mb={4}>
-            Earlier projects
-          </Heading>
+          <Divider my={10} borderColor="var(--line)" />
+          <SectionHeading eyebrow="Earlier projects" />
           <SimpleGrid columns={[1, 1, 2]} gap={6}>
             {earlier.map(p => (
               <ProjectCard key={p.slug} project={p} />
@@ -46,10 +44,8 @@ const Works = ({ repos }) => {
 
         {repos.length > 0 && (
           <Section delay={0.3}>
-            <Divider my={6} />
-            <Heading as="h3" fontSize={20} mb={4}>
-              More on GitHub
-            </Heading>
+            <Divider my={10} borderColor="var(--line)" />
+            <SectionHeading eyebrow="More on GitHub" />
             <SimpleGrid columns={[1, 2]} gap={3}>
               {repos.map(r => (
                 <Box key={r.id}>

@@ -14,17 +14,20 @@ import { Title, Meta } from '../../components/work'
 import P from '../../components/paragraph'
 import Layout from '../../components/layouts/article'
 import { ProjectCover } from '../../components/project-card'
-import projects, { statusLabel, statusColor } from '../../data/projects'
+import projects, { statusLabel } from '../../data/projects'
 
 const Work = ({ project }) => (
   <Layout title={project.title}>
     <Container>
       <Title>
-        {project.title} <Badge>{project.year}</Badge>
+        {project.title}{' '}
+        <Badge fontFamily="mono" fontWeight={400} bg="var(--card)" color="var(--ink-soft)" verticalAlign="middle">
+          {project.year}
+        </Badge>
       </Title>
 
       <Box mb={4}>
-        <ProjectCover project={project} height={160} />
+        <ProjectCover project={project} height={180} />
       </Box>
 
       {project.description.map((para, i) => (
@@ -34,9 +37,7 @@ const Work = ({ project }) => (
       <List ml={4} my={4} spacing={2}>
         <ListItem>
           <Meta>Status</Meta>
-          <Badge colorScheme={statusColor[project.status]} variant="outline">
-            {statusLabel[project.status]}
-          </Badge>
+          <span>{statusLabel[project.status]}</span>
         </ListItem>
         <ListItem>
           <Meta>Platform</Meta>
@@ -47,7 +48,9 @@ const Work = ({ project }) => (
           <Wrap as="span" display="inline-flex" spacing={1}>
             {project.stack.map(s => (
               <WrapItem key={s}>
-                <Tag size="sm">{s}</Tag>
+                <Tag size="sm" bg="var(--card)" color="var(--ink)" border="1px solid var(--line)" borderRadius="full">
+                  {s}
+                </Tag>
               </WrapItem>
             ))}
           </Wrap>

@@ -1,11 +1,8 @@
 import Head from 'next/head'
-import dynamic from 'next/dynamic'
 import Navbar from '../navbar'
 import Footer from '../footer'
+import Tweaks from '../tweaks'
 import { Box, Container } from '@chakra-ui/react'
-
-// Three.js only runs in the browser
-const VoxelScene = dynamic(() => import('../voxel-scene'), { ssr: false })
 
 const description =
   'Jeron Okkers — application developer and Computer Science student in Cape Town. Building practical software for warehouses, workforces and the web.'
@@ -29,11 +26,12 @@ const Main = ({ children, router }) => {
 
       <Navbar path={router.asPath} />
 
-      <Container maxW="container.md" pt={14}>
-        {isHome && <VoxelScene />}
+      <Container maxW={isHome ? 'container.xl' : 'container.md'} pt={24} px={[4, 6, 8]}>
         {children}
         <Footer />
       </Container>
+
+      <Tweaks />
     </Box>
   )
 }

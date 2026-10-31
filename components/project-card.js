@@ -1,20 +1,11 @@
 import NextLink from 'next/link'
-import {
-  Box,
-  Text,
-  Badge,
-  LinkBox,
-  LinkOverlay,
-  Wrap,
-  WrapItem,
-  Tag,
-  useColorModeValue
-} from '@chakra-ui/react'
-import { statusLabel, statusColor } from '../data/projects'
+import { Box, Text, LinkBox, LinkOverlay, HStack } from '@chakra-ui/react'
+import { statusLabel } from '../data/projects'
 
-// Generated cover so projects don't need screenshot files.
-export const ProjectCover = ({ project, height = 120 }) => {
-  const [a, b] = project.accent || ['#f6ad55', '#c05621']
+// Print-style cover: paper block with a coloured "ink" stripe pattern and
+// big serif initials. No screenshots needed.
+export const ProjectCover = ({ project, height = 140 }) => {
+  const [a] = project.accent || ['var(--accent)']
   const initials = project.title
     .split(/[\s-]+/)
     .filter(Boolean)
@@ -24,27 +15,37 @@ export const ProjectCover = ({ project, height = 120 }) => {
   return (
     <Box
       h={`${height}px`}
-      borderRadius="12px"
+      borderRadius="lg"
       position="relative"
       overflow="hidden"
-      bg={`linear-gradient(135deg, ${a}, ${b})`}
+      bg="var(--sky)"
+      border="1px solid var(--line)"
     >
       <Box
         position="absolute"
         inset={0}
-        opacity={0.18}
-        bgImage="radial-gradient(circle at 1px 1px, white 1px, transparent 0)"
-        bgSize="14px 14px"
+        opacity={0.28}
+        bgImage={`repeating-linear-gradient(135deg, ${a} 0 2px, transparent 2px 12px)`}
+      />
+      <Box
+        position="absolute"
+        right="-18px"
+        top="-18px"
+        w="96px"
+        h="96px"
+        borderRadius="full"
+        bg={a}
+        opacity={0.85}
       />
       <Text
         position="absolute"
-        right={3}
+        left={4}
         bottom={1}
-        fontFamily="M PLUS Rounded 1c"
-        fontWeight="bold"
-        fontSize={height > 140 ? '6xl' : '4xl'}
-        color="whiteAlpha.800"
-        lineHeight={1.2}
+        fontFamily="heading"
+        fontStyle="italic"
+        fontSize={height > 150 ? '7xl' : '6xl'}
+        lineHeight={1}
+        color="var(--ink)"
       >
         {initials}
       </Text>
@@ -52,43 +53,43 @@ export const ProjectCover = ({ project, height = 120 }) => {
   )
 }
 
-export const ProjectCard = ({ project, compact = false }) => {
-  const cardBg = useColorModeValue('whiteAlpha.600', 'whiteAlpha.100')
-  return (
-    <LinkBox
-      as="article"
-      bg={cardBg}
-      borderRadius="xl"
-      p={3}
-      h="100%"
-      transition="transform 0.2s ease"
-      _hover={{ transform: 'translateY(-3px)' }}
-    >
-      <ProjectCover project={project} height={compact ? 90 : 120} />
-      <Box mt={3}>
-        <LinkOverlay as={NextLink} href={`/works/${project.slug}`} scroll={false}>
-          <Text fontWeight="bold" fontSize={compact ? 'md' : 'lg'}>
-            {project.title}
-          </Text>
-        </LinkOverlay>
-        <Badge colorScheme={statusColor[project.status]} mt={1} mb={2}>
-          {statusLabel[project.status]}
-        </Badge>
-        <Text fontSize="sm" opacity={0.85} noOfLines={compact ? 3 : undefined}>
-          {project.summary}
-        </Text>
-        {!compact && (
-          <Wrap spacing={1} mt={3}>
-            {project.stack.slice(0, 4).map(s => (
-              <WrapItem key={s}>
-                <Tag size="sm" variant="outline">
-                  {s}
-                </Tag>
-              </WrapItem>
-            ))}
-          </Wrap>
+export const ProjectCard = ({ project, index, compact = false }) => (
+  <LinkBox
+    as="article"
+    bg="var(--card)"
+    border="1px solid var(--line)"
+    borderRadius="xl"
+    p={4}
+    h="100%"
+    transition="transform 0.25s ease, box-shadow 0.25s ease"
+    _hover={{ transform: 'translateY(-4px)', boxShadow: '0 16px 36px rgba(0,0,0,0.08)' }}
+  >
+    <ProjectCover project={project} height={compact ? 120 : 140} />
+    <HStack justify="space-between" mt={4} mb={1}>
+      <Text fontFamily="mono" fontSize="xs" letterSpacing="0.1em" color="var(--ink-soft)">
+        {index != null && (
+          <Box as="span" className="sec-num" color="var(--accent)" mr={2}>
+            {String(index + 1).padStart(2, '0')}
+          </Box>
         )}
-      </Box>
-    </LinkBox>
-  )
-}
+        {project.year}
+      </Text>
+      <Text fontFamily="mono" fontSize="xs" letterSpacing="0.1em" color="var(--ink-soft)" textTransform="uppercase">
+        ● {statusLabel[project.status]}
+      </Text>
+    </HStack>
+    <LinkOverlay as={NextLink} href={`/works/${project.slug}`} scroll={false} _hover={{ textDecoration: 'none' }}>
+      <Text fontFamily="heading" fontSize={compact ? '2xl' : '3xl'} lineHeight={1.1} color="var(--ink)">
+        {project.title}
+      </Text>
+    </LinkOverlay>
+    <Text fontSize="sm" color="var(--ink-soft)" mt={2} noOfLines={compact ? 3 : undefined}>
+      {project.summary}
+    </Text>
+    {!compact && (
+      <Text fontFamily="mono" fontSize="xs" color="var(--ink-soft)" mt={4} letterSpacing="0.04em">
+        {project.stack.slice(0, 4).join(' · ')}
+      </Text>
+    )}
+  </LinkBox>
+)

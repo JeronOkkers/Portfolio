@@ -1,268 +1,346 @@
 import NextLink from 'next/link'
-import Image from 'next/image'
 import {
-  Link,
-  Container,
-  Heading,
   Box,
   Button,
-  List,
-  ListItem,
+  Heading,
+  HStack,
+  Link,
   SimpleGrid,
-  Tag,
-  Wrap,
-  WrapItem,
+  Stack,
   Text,
-  useColorModeValue
+  Wrap,
+  WrapItem
 } from '@chakra-ui/react'
-import { ChevronRightIcon } from '@chakra-ui/icons'
-import { IoLogoGithub, IoLogoInstagram } from 'react-icons/io5'
-import Paragraph from '../components/paragraph'
-import { BioSection, BioYear } from '../components/bio'
 import Layout from '../components/layouts/article'
 import Section from '../components/section'
+import SectionHeading from '../components/section-heading'
+import Paragraph from '../components/paragraph'
+import HeroArt from '../components/hero-art'
 import { ProjectCard } from '../components/project-card'
 import projects from '../data/projects'
 
-const skills = {
+const stackStrip = ['C# / .NET', 'Next.js', 'React Native', 'SQL Server', 'Supabase', 'Azure']
+
+const now = [
+  {
+    label: 'Studying',
+    title: 'BSc Computer Science',
+    body: 'Application Development at Varsity College (now Emeris): Java, C#, SQL, networking, Docker and Azure.'
+  },
+  {
+    label: 'Working',
+    title: 'Warehouse ops & IT',
+    body: 'WMS superuser at a Cape Town distribution centre: configuration, process improvement, scanners, printers and the network.'
+  },
+  {
+    label: 'Building',
+    title: 'StatNav',
+    body: 'A mobile + web platform for scheduling and tracking field staff at marketing activations.',
+    href: '/works/statnav'
+  }
+]
+
+const path = [
+  { year: '2005', text: 'Born in Cape Town, South Africa.' },
+  { year: '2020', text: 'Decided I wanted to build software and started teaching myself to code.' },
+  { year: '2024', text: 'Started a BSc in Computer Science (Application Development) at Varsity College.' },
+  {
+    year: 'Now',
+    text: 'Warehouse operations & IT support at a Cape Town distribution centre, while studying and building StatNav.'
+  }
+]
+
+const toolkit = {
   Languages: ['C#', 'Java', 'JavaScript', 'TypeScript', 'SQL', 'Python'],
-  'Frameworks & tools': [
-    '.NET / ASP.NET Core',
-    'React',
-    'Next.js',
-    'React Native / Expo',
-    'Supabase',
-    'Docker',
-    'Azure',
-    'Git'
-  ],
-  'On the job': [
-    'WMS administration',
-    'SQL Server',
-    'API integrations',
-    'Networking & devices',
-    'IT support'
-  ]
+  'Frameworks & platforms': ['.NET / ASP.NET Core', 'React', 'Next.js', 'React Native / Expo', 'Supabase', 'Docker', 'Azure'],
+  'On the job': ['WMS administration', 'SQL Server', 'API integrations', 'Networking & devices', 'IT support']
 }
+
+const Hero = () => (
+  <Box position="relative" minH={{ base: 'auto', md: '560px' }} mb={{ base: 10, md: 16 }}>
+    {/* art: on the right on desktop, on top on mobile */}
+    <HeroArt
+      position={{ base: 'relative', md: 'absolute' }}
+      right={0}
+      top={0}
+      bottom={0}
+      w={{ base: '100%', md: '64%' }}
+      h={{ base: '260px', md: '100%' }}
+      borderRadius="2xl"
+      overflow="hidden"
+      mb={{ base: 6, md: 0 }}
+      sx={{
+        maskImage: {
+          base: 'linear-gradient(to bottom, black 70%, transparent)',
+          md: 'linear-gradient(to right, transparent 0%, black 42%)'
+        },
+        WebkitMaskImage: {
+          base: 'linear-gradient(to bottom, black 70%, transparent)',
+          md: 'linear-gradient(to right, transparent 0%, black 42%)'
+        }
+      }}
+    />
+
+    <Box position="relative" zIndex={1} maxW="600px" pt={{ base: 0, md: 16 }}>
+      <Section delay={0.05}>
+        <HStack
+          display="inline-flex"
+          spacing={2}
+          px={3}
+          py={1}
+          mb={6}
+          borderRadius="full"
+          border="1px solid var(--line)"
+          bg="var(--card)"
+        >
+          <Box w="7px" h="7px" borderRadius="full" bg="var(--accent)" />
+          <Text fontFamily="mono" fontSize="xs" letterSpacing="0.12em" color="var(--ink-soft)">
+            APPLICATION DEVELOPER · CAPE TOWN
+          </Text>
+        </HStack>
+
+        <Heading as="h1" fontSize={['5xl', '6xl', '7xl']} lineHeight={1.02} mb={6}>
+          Practical software,{' '}
+          <Box as="em" color="var(--accent)" fontStyle="italic">
+            built from the warehouse floor up.
+          </Box>
+        </Heading>
+
+        <Text fontSize={['md', 'lg']} color="var(--ink-soft)" lineHeight={1.7} maxW="52ch" mb={8}>
+          I&apos;m Jeron — a Computer Science student and developer who works
+          where software meets real operations: warehouse systems, label
+          printers, scanners and the people who use them every day.
+        </Text>
+
+        <Stack direction={['column', 'row']} spacing={3}>
+          <Button as={NextLink} href="/works" variant="ink" size="lg" px={7}>
+            See my work →
+          </Button>
+          <Button as={NextLink} href="#now" variant="paper" size="lg" px={7}>
+            What I&apos;m doing now ↓
+          </Button>
+        </Stack>
+      </Section>
+    </Box>
+  </Box>
+)
 
 const Home = () => {
   const featured = projects.filter(p => p.featured)
-  const tagScheme = useColorModeValue('orange', 'orange')
 
   return (
     <Layout>
-      <Container>
-        <Box
-          borderRadius="lg"
-          mb={6}
-          p={3}
-          textAlign="center"
-          bg={useColorModeValue('whiteAlpha.500', 'whiteAlpha.200')}
-          css={{ backdropFilter: 'blur(10px)' }}
+      <Hero />
+
+      {/* stack strip */}
+      <Section delay={0.1}>
+        <Wrap
+          spacing={{ base: 3, md: 8 }}
+          justify="center"
+          py={5}
+          borderTop="1px solid var(--line)"
+          borderBottom="1px solid var(--line)"
+          mb={20}
         >
-          Hey! I&apos;m a developer and Computer Science student based in Cape
-          Town, South Africa.
-        </Box>
+          {stackStrip.map(s => (
+            <WrapItem key={s}>
+              <Text fontFamily="mono" fontSize="xs" letterSpacing="0.14em" color="var(--ink-soft)">
+                {s.toUpperCase()}
+              </Text>
+            </WrapItem>
+          ))}
+        </Wrap>
+      </Section>
 
-        <Box display={{ md: 'flex' }}>
-          <Box flexGrow={1}>
-            <Heading as="h2" variant="page-title">
-              Jeron Okkers
-            </Heading>
-            <p>Application developer · CS student · IT on the warehouse floor</p>
+      {/* 01 About */}
+      <Section delay={0.15}>
+        <SimpleGrid columns={[1, 1, 2]} spacing={{ base: 4, md: 16 }} mb={24}>
+          <SectionHeading n={1} eyebrow="About">
+            Between the floor <em>and</em> the systems behind it.
+          </SectionHeading>
+          <Box pt={{ md: 7 }}>
+            <Paragraph>
+              I&apos;m studying towards a Bachelor of Computer Science in
+              Application Development, and I work in a hybrid warehouse
+              operations and IT support role at a distribution centre in Cape
+              Town. I&apos;m the go-to superuser for our warehouse management
+              system, I look after the scanners, printers and network, and I
+              build tools that remove manual work for the people around me.
+            </Paragraph>
+            <Paragraph>
+              Working that close to real operations has shaped how I build: I
+              like software that solves a specific, everyday problem and keeps
+              working when it&apos;s busy. The goal is to move fully into
+              software development once I graduate.
+            </Paragraph>
           </Box>
-          <Box
-            flexShrink={0}
-            mt={{ base: 4, md: 0 }}
-            ml={{ md: 6 }}
-            textAlign="center"
-          >
-            <Box
-              borderColor="whiteAlpha.800"
-              borderWidth={2}
-              borderStyle="solid"
-              w="100px"
-              h="100px"
-              display="inline-block"
-              borderRadius="full"
-              overflow="hidden"
-            >
-              <Image
-                src="/images/avatar.png"
-                alt="Jeron Okkers logo"
-                width={100}
-                height={100}
-                priority
-              />
-            </Box>
-          </Box>
-        </Box>
+        </SimpleGrid>
+      </Section>
 
-        <Section delay={0.1}>
-          <Heading as="h3" variant="section-title">
-            About
-          </Heading>
-          <Paragraph>
-            I&apos;m studying towards a Bachelor of Computer Science in
-            Application Development at Varsity College (now Emeris), and I
-            work in a hybrid warehouse operations and IT support role at a
-            distribution centre in Cape Town. That means I spend my days
-            between the floor and the systems behind it: I&apos;m the go-to
-            superuser for our warehouse management system, I look after the
-            scanners, printers and network, and I build tools that remove
-            manual work for the people around me.
-          </Paragraph>
-          <Paragraph>
-            Working that close to real operations has shaped how I build: I
-            like software that solves a specific, everyday problem and keeps
-            working when it&apos;s busy. Outside of work and study I&apos;m
-            building StatNav, a workforce-management product, and the goal is
-            to move fully into software development once I graduate.
-          </Paragraph>
-          <Box align="center" my={4}>
-            <Button
-              as={NextLink}
-              href="/works"
-              scroll={false}
-              rightIcon={<ChevronRightIcon />}
-              colorScheme="orange"
-            >
-              See my work
-            </Button>
-          </Box>
-        </Section>
-
-        <Section delay={0.15}>
-          <Heading as="h3" variant="section-title">
-            Currently
-          </Heading>
-          <List spacing={2}>
-            <ListItem>
-              <Text as="span" fontWeight="bold">
-                Studying
-              </Text>{' '}
-              — BSc Computer Science (Application Development): Java, C#, SQL,
-              networking, Docker and Azure.
-            </ListItem>
-            <ListItem>
-              <Text as="span" fontWeight="bold">
-                Working
-              </Text>{' '}
-              — warehouse operations &amp; IT support: WMS configuration,
-              process improvement, device and network support.
-            </ListItem>
-            <ListItem>
-              <Text as="span" fontWeight="bold">
-                Building
-              </Text>{' '}
-              —{' '}
-              <Link as={NextLink} href="/works/statnav" scroll={false}>
-                StatNav
-              </Link>
-              , a mobile + web platform for scheduling and tracking field
-              staff.
-            </ListItem>
-          </List>
-        </Section>
-
-        <Section delay={0.2}>
-          <Heading as="h3" variant="section-title">
-            Featured work
-          </Heading>
-          <SimpleGrid columns={[1, 1, 3]} gap={4}>
-            {featured.map(p => (
-              <ProjectCard key={p.slug} project={p} compact />
+      {/* 02 Now */}
+      <Section delay={0.2}>
+        <Box id="now" scrollMarginTop="100px" mb={24}>
+          <SectionHeading n={2} eyebrow="Now">
+            What I&apos;m <em>doing now</em>.
+          </SectionHeading>
+          <SimpleGrid columns={[1, 1, 3]} spacing={5}>
+            {now.map(item => (
+              <Box key={item.label} bg="var(--card)" border="1px solid var(--line)" borderRadius="xl" p={6}>
+                <Text fontFamily="mono" fontSize="xs" letterSpacing="0.14em" color="var(--accent)" mb={3}>
+                  {item.label.toUpperCase()}
+                </Text>
+                <Text fontFamily="heading" fontSize="2xl" lineHeight={1.15} mb={2}>
+                  {item.href ? (
+                    <Link as={NextLink} href={item.href} color="var(--ink)">
+                      {item.title} →
+                    </Link>
+                  ) : (
+                    item.title
+                  )}
+                </Text>
+                <Text fontSize="sm" color="var(--ink-soft)" lineHeight={1.7}>
+                  {item.body}
+                </Text>
+              </Box>
             ))}
           </SimpleGrid>
-        </Section>
+        </Box>
+      </Section>
 
-        <Section delay={0.25}>
-          <Heading as="h3" variant="section-title">
-            Bio
-          </Heading>
-          <BioSection>
-            <BioYear>2005</BioYear>
-            Born in Cape Town, South Africa.
-          </BioSection>
-          <BioSection>
-            <BioYear>2020</BioYear>
-            Decided I wanted to build software and started teaching myself to
-            code.
-          </BioSection>
-          <BioSection>
-            <BioYear>2024</BioYear>
-            Started a BSc in Computer Science (Application Development) at
-            Varsity College.
-          </BioSection>
-          <BioSection>
-            <BioYear>Now</BioYear>
-            Warehouse operations &amp; IT support at a Cape Town distribution
-            centre, while studying and building StatNav.
-          </BioSection>
-        </Section>
+      {/* 03 Work */}
+      <Section delay={0.25}>
+        <Box mb={24}>
+          <HStack justify="space-between" align="flex-end" mb={0}>
+            <SectionHeading n={3} eyebrow="Selected work">
+              Things I&apos;ve <em>built</em>.
+            </SectionHeading>
+            <Link
+              as={NextLink}
+              href="/works"
+              fontFamily="mono"
+              fontSize="xs"
+              letterSpacing="0.12em"
+              mb={7}
+              display={{ base: 'none', md: 'block' }}
+            >
+              ALL PROJECTS →
+            </Link>
+          </HStack>
+          <SimpleGrid columns={[1, 1, 3]} spacing={5}>
+            {featured.map((p, i) => (
+              <ProjectCard key={p.slug} project={p} index={i} />
+            ))}
+          </SimpleGrid>
+        </Box>
+      </Section>
 
-        <Section delay={0.3}>
-          <Heading as="h3" variant="section-title">
-            Skills
-          </Heading>
-          {Object.entries(skills).map(([group, items]) => (
-            <Box key={group} mb={3}>
-              <Text fontSize="sm" opacity={0.7} mb={1}>
-                {group}
-              </Text>
-              <Wrap spacing={2}>
-                {items.map(s => (
-                  <WrapItem key={s}>
-                    <Tag size="md" colorScheme={tagScheme} variant="subtle">
-                      {s}
-                    </Tag>
-                  </WrapItem>
-                ))}
-              </Wrap>
+      {/* 04 Path + 05 Toolkit */}
+      <Section delay={0.3}>
+        <SimpleGrid columns={[1, 1, 2]} spacing={{ base: 16, md: 16 }} mb={24}>
+          <Box>
+            <SectionHeading n={4} eyebrow="Path">
+              How I <em>got here</em>.
+            </SectionHeading>
+            <Box borderLeft="1px solid var(--line)" pl={6}>
+              {path.map(p => (
+                <Box key={p.year} position="relative" mb={6}>
+                  <Box
+                    position="absolute"
+                    left="-29px"
+                    top="10px"
+                    w="9px"
+                    h="9px"
+                    borderRadius="full"
+                    bg={p.year === 'Now' ? 'var(--accent)' : 'var(--paper)'}
+                    border="1px solid var(--ink-soft)"
+                  />
+                  <Text fontFamily="heading" fontStyle="italic" fontSize="2xl" lineHeight={1.2}>
+                    {p.year}
+                  </Text>
+                  <Text fontSize="sm" color="var(--ink-soft)" lineHeight={1.7}>
+                    {p.text}
+                  </Text>
+                </Box>
+              ))}
             </Box>
-          ))}
-        </Section>
+          </Box>
+          <Box>
+            <SectionHeading n={5} eyebrow="Toolkit">
+              What I <em>work with</em>.
+            </SectionHeading>
+            {Object.entries(toolkit).map(([group, items]) => (
+              <Box key={group} mb={6}>
+                <Text fontFamily="mono" fontSize="xs" letterSpacing="0.14em" color="var(--ink-soft)" mb={2}>
+                  {group.toUpperCase()}
+                </Text>
+                <Wrap spacing={2}>
+                  {items.map(s => (
+                    <WrapItem key={s}>
+                      <Box
+                        px={3}
+                        py={1}
+                        borderRadius="full"
+                        border="1px solid var(--line)"
+                        bg="var(--card)"
+                        fontSize="sm"
+                      >
+                        {s}
+                      </Box>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
+            ))}
+          </Box>
+        </SimpleGrid>
+      </Section>
 
-        <Section delay={0.35}>
-          <Heading as="h3" variant="section-title">
-            Outside of code
-          </Heading>
-          <Paragraph>
-            Art, music and drawing, training (calisthenics and core work) and
-            the occasional rabbit hole into machine learning.
-          </Paragraph>
-        </Section>
-
-        <Section delay={0.4}>
-          <Heading as="h3" variant="section-title">
-            On the web
-          </Heading>
-          <List>
-            <ListItem>
-              <Link href="https://github.com/JeronOkkers" target="_blank">
-                <Button
-                  variant="ghost"
-                  colorScheme="orange"
-                  leftIcon={<IoLogoGithub />}
-                >
-                  @JeronOkkers
-                </Button>
-              </Link>
-            </ListItem>
-            <ListItem>
-              <Link href="https://instagram.com/mr_president_jjo" target="_blank">
-                <Button
-                  variant="ghost"
-                  colorScheme="orange"
-                  leftIcon={<IoLogoInstagram />}
-                >
-                  @mr_president_jjo
-                </Button>
-              </Link>
-            </ListItem>
-          </List>
-        </Section>
-      </Container>
+      {/* 06 Off the clock / elsewhere */}
+      <Section delay={0.35}>
+        <Box
+          bg="var(--card)"
+          border="1px solid var(--line)"
+          borderRadius="2xl"
+          p={{ base: 6, md: 10 }}
+        >
+          <SimpleGrid columns={[1, 1, 2]} spacing={10}>
+            <Box>
+              <SectionHeading n={6} eyebrow="Off the clock" mb={3} />
+              <Text fontFamily="heading" fontSize={['2xl', '3xl']} lineHeight={1.25}>
+                Art, music and drawing, training{' '}
+                <Box as="em" color="var(--accent)">calisthenics and core</Box>, and the occasional rabbit
+                hole into machine learning.
+              </Text>
+            </Box>
+            <Box>
+              <SectionHeading eyebrow="Elsewhere" mb={3} />
+              <Stack spacing={3}>
+                {[
+                  { label: 'GitHub', handle: '@JeronOkkers', href: 'https://github.com/JeronOkkers' },
+                  { label: 'Instagram', handle: '@mr_president_jjo', href: 'https://instagram.com/mr_president_jjo' }
+                ].map(l => (
+                  <Link
+                    key={l.label}
+                    href={l.href}
+                    target="_blank"
+                    display="flex"
+                    justifyContent="space-between"
+                    borderBottom="1px solid var(--line)"
+                    pb={3}
+                    color="var(--ink)"
+                    _hover={{ color: 'var(--accent)', textDecoration: 'none' }}
+                  >
+                    <Text>{l.label}</Text>
+                    <Text fontFamily="mono" fontSize="sm">
+                      {l.handle} ↗
+                    </Text>
+                  </Link>
+                ))}
+              </Stack>
+            </Box>
+          </SimpleGrid>
+        </Box>
+      </Section>
     </Layout>
   )
 }

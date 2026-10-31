@@ -1,7 +1,7 @@
 import {
   ChakraProvider,
   cookieStorageManagerSSR,
-  localStorageManager
+  cookieStorageManager
 } from '@chakra-ui/react'
 import theme from '../libs/theme'
 
@@ -9,7 +9,7 @@ export default function Chakra({ cookies, children }) {
   const colorModeManager =
     typeof cookies === 'string'
       ? cookieStorageManagerSSR(cookies)
-      : localStorageManager
+      : cookieStorageManager // same cookie on every page, so the theme sticks
 
   return (
     <ChakraProvider theme={theme} colorModeManager={colorModeManager}>

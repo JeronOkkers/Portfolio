@@ -75,12 +75,12 @@ const projects = [
     year: '2023–',
     status: 'live',
     summary:
-      'The site you are on — Next.js, Chakra UI, a hand-built voxel scene in Three.js and a live health dashboard.',
+      'The site you are on — an editorial, print-inspired design in Next.js with a live Tweaks panel and a health dashboard.',
     description: [
       'Started from a template in 2023 and rebuilt in 2026 to reflect where I actually am now.',
-      'The voxel scene on the home page — my wolf, my desk, a pallet of stock and a dumbbell — is built voxel by voxel in code with Three.js (no 3D model file). The Health page reads my own fitness data on the server and caches it, so visitors never have to sign in to anything.'
+      'The Table Mountain on the home page is an original woodblock-print-style SVG, coloured from CSS variables so it follows the Tweaks panel (accent ink, paper tone) and dark mode. The Health page reads my own fitness data on the server and caches it, so visitors never have to sign in to anything.'
     ],
-    stack: ['Next.js', 'React', 'Chakra UI', 'Three.js', 'Chart.js', 'Vercel'],
+    stack: ['Next.js', 'React', 'Chakra UI', 'SVG', 'Chart.js', 'Vercel'],
     platform: 'Web',
     source: 'https://github.com/JeronOkkers/Portfolio',
     website: 'https://jeronokkers.vercel.app',

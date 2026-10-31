@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {
   Box,
-  Heading,
   Text,
   SimpleGrid,
   Button,
@@ -27,6 +26,7 @@ import {
 import { Line, Bar } from 'react-chartjs-2'
 import Layout from '../components/layouts/article'
 import Section from '../components/section'
+import SectionHeading from '../components/section-heading'
 import type {
   HealthNotConfigured,
   HealthResponse,
@@ -54,9 +54,8 @@ const STAGE_META: { key: SleepStage; label: string; color: string }[] = [
 ]
 
 const Card = ({ children, ...rest }: any) => {
-  const bg = useColorModeValue('whiteAlpha.600', 'whiteAlpha.100')
   return (
-    <Box bg={bg} borderRadius="xl" p={4} {...rest}>
+    <Box bg="var(--card)" border="1px solid var(--line)" borderRadius="xl" p={4} {...rest}>
       {children}
     </Box>
   )
@@ -89,6 +88,10 @@ const series = (points: SeriesPoint[], offset: number) => ({
 
 const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => void }) => {
   const off = data.timezoneOffsetMinutes
+  const accent =
+    typeof window !== 'undefined'
+      ? getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#d2452f'
+      : '#d2452f'
   const gridColor = useColorModeValue('rgba(0,0,0,0.06)', 'rgba(255,255,255,0.08)')
   const steps = series(data.steps.hourly, off)
   const hr = series(data.heartRate.hourly, off)
@@ -125,7 +128,7 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
         <Text fontWeight="bold" mb={2}>
           Step goal
         </Text>
-        <Progress value={stepPct} colorScheme="orange" size="sm" borderRadius="md" />
+        <Progress value={stepPct} sx={{ "& > div": { bg: "var(--accent)" } }} bg="var(--line)" size="sm" borderRadius="md" />
       </Card>
 
       {sleep && (
@@ -173,7 +176,7 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
                 options={chartOptions(gridColor) as any}
                 data={{
                   labels: steps.labels,
-                  datasets: [{ data: steps.values, backgroundColor: '#ed8936', borderRadius: 4 }]
+                  datasets: [{ data: steps.values, backgroundColor: accent, borderRadius: 4 }]
                 }}
               />
             ) : (
@@ -244,9 +247,9 @@ const HealthPage = () => {
     <Layout title="Health">
       <Container>
         <Section delay={0.1}>
-          <Heading as="h3" fontSize={20} mb={2}>
-            Health
-          </Heading>
+          <SectionHeading eyebrow="Health">
+            Keeping the <em>body</em> running too.
+          </SectionHeading>
           <Text mb={6} opacity={0.85}>
             I&apos;m getting back into training — calisthenics and core, three
             days a week. This page shows my own numbers, synced from my phone
@@ -255,7 +258,7 @@ const HealthPage = () => {
 
           {!data && !error && (
             <Box textAlign="center" py={10}>
-              <Spinner size="xl" color="orange.400" />
+              <Spinner size="xl" color="var(--accent)" />
             </Box>
           )}
           {error && <Text>Couldn&apos;t load health data right now.</Text>}

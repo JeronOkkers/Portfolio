@@ -34,6 +34,13 @@ export interface HealthSummary {
   }
   sleep: SleepSummary | null
   oxygen: { average: number | null }
+  today: { distanceMeters: number | null; activeCalories: number | null }
+  week: {
+    steps: { date: string; steps: number }[] // last 7 local days, oldest first
+    sleep: { date: string; asleepMs: number }[] // last 7 nights (date = morning you woke up)
+  }
+  workouts: { name: string; start: number; durationMs: number }[] // most recent first
+  lastSyncAt: number | null
   warnings: string[]
 }
 

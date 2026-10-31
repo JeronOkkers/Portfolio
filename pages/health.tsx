@@ -45,6 +45,17 @@ const fmtTime = (t: number, offsetMin: number) => {
   return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
 }
 
+const weekday = (date: string) =>
+  new Date(date + 'T12:00:00Z').toLocaleDateString('en-ZA', { weekday: 'short', timeZone: 'UTC' })
+
+const fmtKm = (m: number | null) => (m == null ? '—' : `${(m / 1000).toFixed(1)} km`)
+
+const daysAgo = (t: number, now: number, offsetMin: number) => {
+  const d = (x: number) => Math.floor((x + offsetMin * 60000) / 86400000)
+  const n = d(now) - d(t)
+  return n === 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`
+}
+
 const STAGE_META: { key: SleepStage; label: string; color: string }[] = [
   { key: 'deep', label: 'Deep', color: '#553c9a' },
   { key: 'light', label: 'Light', color: '#805ad5' },
@@ -71,13 +82,13 @@ const StatCard = ({ label, value, help }: { label: string; value: string; help?:
   </Card>
 )
 
-const chartOptions = (gridColor: string) => ({
+const chartOptions = (gridColor: string, fromZero = false) => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
     x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
-    y: { grid: { color: gridColor }, beginAtZero: false }
+    y: { grid: { color: gridColor }, beginAtZero: fromZero }
   }
 })
 
@@ -98,6 +109,10 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
   const sleep = data.sleep
   const hrv = data.heartRate
   const stepPct = Math.min(100, (data.steps.today / data.steps.goal) * 100)
+  const weekAvg = data.week.steps.reduce((a, d) => a + d.steps, 0) / Math.max(1, data.week.steps.length)
+  const goalDays = data.week.steps.filter(d => d.steps >= data.steps.goal).length
+  const weekWorkouts = data.workouts.filter(w => data.generatedAt - w.start < 7 * 86400000).length
+  const hasSleepWeek = data.week.sleep.some(d => d.asleepMs > 0)
 
   return (
     <>
@@ -130,6 +145,24 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
         </Text>
         <Progress value={stepPct} sx={{ "& > div": { bg: "var(--accent)" } }} bg="var(--line)" size="sm" borderRadius="md" />
       </Card>
+
+      <SimpleGrid columns={[2, 2, 4]} spacing={3} mb={4}>
+        <StatCard label="Distance today" value={fmtKm(data.today.distanceMeters)} />
+        <StatCard
+          label="Active energy"
+          value={data.today.activeCalories != null ? `${Math.round(data.today.activeCalories)} kcal` : '—'}
+        />
+        <StatCard
+          label="7-day avg steps"
+          value={Math.round(weekAvg).toLocaleString('en-ZA')}
+          help={`${goalDays} of 7 days hit ${data.steps.goal.toLocaleString('en-ZA')}`}
+        />
+        <StatCard
+          label="Workouts (7 days)"
+          value={String(weekWorkouts)}
+          help={data.workouts[0] ? `last ${daysAgo(data.workouts[0].start, data.generatedAt, off)}` : 'none logged yet'}
+        />
+      </SimpleGrid>
 
       {sleep && (
         <Card mb={4}>
@@ -173,7 +206,7 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
           <Box h="200px">
             {steps.values.some(v => v > 0) ? (
               <Bar
-                options={chartOptions(gridColor) as any}
+                options={chartOptions(gridColor, true) as any}
                 data={{
                   labels: steps.labels,
                   datasets: [{ data: steps.values, backgroundColor: accent, borderRadius: 4 }]
@@ -215,8 +248,89 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
         </Card>
       </SimpleGrid>
 
+      <SimpleGrid columns={[1, 1, 2]} spacing={4} mb={4}>
+        <Card>
+          <Text fontWeight="bold" mb={2}>
+            Steps · last 7 days
+          </Text>
+          <Box h="200px">
+            <Bar
+              options={chartOptions(gridColor, true) as any}
+              data={{
+                labels: data.week.steps.map(d => weekday(d.date)),
+                datasets: [
+                  {
+                    data: data.week.steps.map(d => d.steps),
+                    // full colour on days that hit the goal
+                    backgroundColor: data.week.steps.map(d =>
+                      d.steps >= data.steps.goal ? accent : `${accent}66`
+                    ),
+                    borderRadius: 4
+                  }
+                ]
+              }}
+            />
+          </Box>
+        </Card>
+        <Card>
+          <Text fontWeight="bold" mb={2}>
+            Sleep · last 7 nights
+          </Text>
+          <Box h="200px">
+            {hasSleepWeek ? (
+              <Bar
+                options={{
+                  ...(chartOptions(gridColor, true) as any),
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (c: any) => fmtDuration(c.raw * 3600000) } }
+                  }
+                }}
+                data={{
+                  labels: data.week.sleep.map(d => weekday(d.date)),
+                  datasets: [
+                    {
+                      data: data.week.sleep.map(d => Math.round((d.asleepMs / 3600000) * 10) / 10),
+                      backgroundColor: '#805ad5',
+                      borderRadius: 4
+                    }
+                  ]
+                }}
+              />
+            ) : (
+              <Text opacity={0.6}>No sleep logged this week.</Text>
+            )}
+          </Box>
+        </Card>
+      </SimpleGrid>
+
+      {data.workouts.length > 0 && (
+        <Card mb={4}>
+          <Text fontWeight="bold" mb={3}>
+            Recent workouts
+          </Text>
+          {data.workouts.map(w => (
+            <Box
+              key={w.start}
+              display="flex"
+              justifyContent="space-between"
+              py={2}
+              borderTop="1px solid var(--line)"
+              fontSize="sm"
+            >
+              <Text>{w.name}</Text>
+              <Text fontFamily="mono" opacity={0.75}>
+                {fmtDuration(w.durationMs)} · {daysAgo(w.start, data.generatedAt, off)}
+              </Text>
+            </Box>
+          ))}
+        </Card>
+      )}
+
       <Text fontSize="xs" opacity={0.6} textAlign="center">
-        From {data.provider} · updated {fmtTime(data.generatedAt, off)} SAST
+        From {data.provider}
+        {data.lastSyncAt && ` · last synced ${fmtTime(data.lastSyncAt, off)}`} · page updated{' '}
+        {fmtTime(data.generatedAt, off)} SAST
         {data.warnings.length > 0 && ` · unavailable: ${data.warnings.join(', ')}`}
         {' · '}
         <Button size="xs" variant="link" onClick={onRefresh}>
@@ -253,9 +367,8 @@ const HealthPage = () => {
             Keeping the <em>body</em> running too.
           </SectionHeading>
           <Text mb={6} opacity={0.85}>
-            I&apos;m getting back into training — calisthenics and core, three
-            days a week. This page shows my own numbers, synced from my Galaxy Watch
-            and cached on the server.
+            Live data from my Galaxy Watch, updated automatically throughout
+            the day.
           </Text>
 
           {!data && !error && (

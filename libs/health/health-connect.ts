@@ -110,7 +110,14 @@ export const healthConnectProvider: HealthProvider = {
     const granular = stepRows.filter(r => !r.end_at || ms(r.end_at) - ms(r.start_at) < 2 * HOUR)
     const stepHourly = hourly(granular, dayStart, Math.min(now, dayStart + DAY), 'sum')
     const stepSum = stepHourly.reduce((a, p) => a + p.v, 0)
-    const today = totals?.steps ?? stepSum // daily total from Health Connect is de-duplicated across apps
+    // Samsung Health also writes its own whole-day step record; that's the number the
+    // Samsung Health app shows. Health Connect's de-duplicated daily total can come out
+    // lower (it ranks sources by its own app-priority list). Steps only go up during a
+    // day, so use the highest of: Samsung's day record, Health Connect's total, our sum.
+    const dayRecords = stepRows
+      .filter(r => r.end_at && ms(r.end_at) - ms(r.start_at) >= 20 * HOUR && ms(r.start_at) >= dayStart - HOUR)
+      .map(r => r.value || 0)
+    const today = Math.max(totals?.steps ?? 0, stepSum, ...dayRecords)
 
     // Heart rate (last 24h)
     const hr = of('heart_rate').filter(r => ms(r.start_at) >= now - DAY && r.value != null)

@@ -82,7 +82,8 @@ export const healthConnectProvider: HealthProvider = {
     const sb = db()
     const warnings: string[] = []
 
-    const [{ data: rows, error }, { data: totals }, { data: restingRows }] = await Promise.all([
+    const weekAgo = new Date(dayStart - 7 * DAY).toISOString()
+    const [{ data: rows, error }, { data: totals }, { data: restingRows }, { data: weekTotals }, { data: sleepWeek }, { data: workoutRows }, { data: lastRow }] = await Promise.all([
       sb
         .from('health_records')
         .select('type,start_at,end_at,value,data')
@@ -90,13 +91,35 @@ export const healthConnectProvider: HealthProvider = {
         .gte('start_at', new Date(now - 48 * HOUR).toISOString()) // sleep can start the evening before
         .order('start_at', { ascending: true })
         .limit(20000),
-      sb.from('health_daily_totals').select('steps').eq('date', localDate(now, offset)).maybeSingle(),
+      sb
+        .from('health_daily_totals')
+        .select('steps,distance_meters,active_calories')
+        .eq('date', localDate(now, offset))
+        .maybeSingle(),
       sb
         .from('health_records')
         .select('value,start_at')
         .eq('type', 'resting_heart_rate')
         .order('start_at', { ascending: false })
-        .limit(1)
+        .limit(1),
+      sb
+        .from('health_daily_totals')
+        .select('date,steps')
+        .gte('date', localDate(now - 6 * DAY, offset))
+        .order('date', { ascending: true }),
+      sb
+        .from('health_records')
+        .select('type,start_at,end_at,value,data')
+        .eq('type', 'sleep')
+        .gte('end_at', weekAgo)
+        .order('end_at', { ascending: true }),
+      sb
+        .from('health_records')
+        .select('start_at,end_at,value,data')
+        .eq('type', 'exercise')
+        .order('start_at', { ascending: false })
+        .limit(5),
+      sb.from('health_records').select('received_at').order('received_at', { ascending: false }).limit(1)
     ])
     if (error) throw new Error(error.message)
 
@@ -135,6 +158,35 @@ export const healthConnectProvider: HealthProvider = {
 
     if (!all.length) warnings.push('no recent data')
 
+    // Last 7 days of steps (fill gaps with 0 so the chart always has 7 bars)
+    const stepsByDate = new Map((weekTotals || []).map((d: any) => [d.date as string, (d.steps as number) || 0]))
+    stepsByDate.set(localDate(now, offset), today)
+    const weekSteps = Array.from({ length: 7 }, (_, i) => {
+      const date = localDate(now - (6 - i) * DAY, offset)
+      return { date, steps: stepsByDate.get(date) ?? 0 }
+    })
+
+    // Last 7 nights: total asleep per morning (naps/split sleep on the same day add up)
+    const nights = new Map<string, number>()
+    for (const r of (sleepWeek || []) as Row[]) {
+      const sum = summariseSleep(r)
+      if (!sum) continue
+      const date = localDate(sum.end, offset)
+      nights.set(date, (nights.get(date) || 0) + sum.asleepMs)
+    }
+    const weekSleep = Array.from({ length: 7 }, (_, i) => {
+      const date = localDate(now - (6 - i) * DAY, offset)
+      return { date, asleepMs: nights.get(date) || 0 }
+    })
+
+    const prettyName = (n: string | null) =>
+      (n || 'workout').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())
+    const workouts = (workoutRows || []).map((w: any) => ({
+      name: w.data?.title || prettyName(w.data?.name),
+      start: ms(w.start_at),
+      durationMs: (w.value || (w.end_at ? (ms(w.end_at) - ms(w.start_at)) / 1000 : 0)) * 1000
+    }))
+
     return {
       configured: true,
       provider: 'Galaxy Watch',
@@ -151,6 +203,13 @@ export const healthConnectProvider: HealthProvider = {
       },
       sleep: summariseSleep(sleep),
       oxygen: { average: ox.length ? round1(ox.reduce((a, r) => a + (r.value as number), 0) / ox.length) : null },
+      today: {
+        distanceMeters: totals?.distance_meters ?? null,
+        activeCalories: totals?.active_calories ?? null
+      },
+      week: { steps: weekSteps, sleep: weekSleep },
+      workouts,
+      lastSyncAt: lastRow?.[0]?.received_at ? ms(lastRow[0].received_at) : null,
       warnings
     }
   }

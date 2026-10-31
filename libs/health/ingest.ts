@@ -94,6 +94,29 @@ export function toRows(p: any): { rows: HealthRow[]; daily: DailyRow[]; deleted:
     })
   }
 
+  // Anything else the app sends (weight, HRV, blood pressure, distance, ...) is kept as-is
+  // so it can be charted later without re-syncing.
+  const HANDLED = new Set(['steps', 'heart_rate', 'resting_heart_rate', 'oxygen_saturation', 'sleep', 'exercise'])
+  for (const [key, arr] of Object.entries(p)) {
+    if (HANDLED.has(key) || !Array.isArray(arr) || key.startsWith('_')) continue
+    if (['daily_totals', 'deleted_records', 'deletions_unavailable', 'records_outside_window'].includes(key)) continue
+    for (const r of arr as any[]) {
+      if (!r || typeof r !== 'object') continue
+      const start = r.time || r.start_time || r.bucket_start
+      if (!start) continue
+      const firstNum = Object.entries(r).find(([k, v]) => typeof v === 'number' && !/duration|sample_count/.test(k))
+      rows.push({
+        uuid: r.uuid || `${key}:${start}`,
+        type: key,
+        start_at: start,
+        end_at: r.end_time || r.bucket_end || null,
+        value: firstNum ? (firstNum[1] as number) : null,
+        data: r,
+        source: r.source ?? null
+      })
+    }
+  }
+
   const daily: DailyRow[] = (p.daily_totals || [])
     .filter((d: any) => d.date)
     .map((d: any) => ({

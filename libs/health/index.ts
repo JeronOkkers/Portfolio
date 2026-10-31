@@ -1,22 +1,20 @@
 // Picks the health data provider.
 //
-// MIGRATION PLAN (Google Fit → Google Health API):
-// Google is retiring the Google Fit APIs by the end of 2026. When that happens:
-//   1. Add libs/health/google-health.ts exporting a HealthProvider that returns
-//      the same HealthSummary shape (see ./types.ts).
-//   2. Register it below and set HEALTH_PROVIDER=google-health in Vercel.
-//   3. Nothing in pages/health.tsx needs to change.
-// Until then, HEALTH_PROVIDER=none hides the live data cleanly.
+// Default: "health-connect" — Galaxy Watch → Samsung Health → Health Connect →
+// Life Dashboard Companion app → /api/health/ingest → Supabase.
+// Set HEALTH_PROVIDER=none in Vercel to hide live data.
+// To add another source later, write a HealthProvider that returns the same
+// HealthSummary shape (./types.ts) and register it below.
 
 import type { HealthProvider, HealthResponse } from './types'
-import { googleFitProvider } from './google-fit'
+import { healthConnectProvider } from './health-connect'
 
 const providers: Record<string, HealthProvider> = {
-  'google-fit': googleFitProvider
+  'health-connect': healthConnectProvider
 }
 
 export async function getHealth(): Promise<HealthResponse> {
-  const key = process.env.HEALTH_PROVIDER || 'google-fit'
+  const key = process.env.HEALTH_PROVIDER || 'health-connect'
   if (key === 'none') {
     return { configured: false, reason: 'Live health data is switched off for now.' }
   }

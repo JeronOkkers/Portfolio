@@ -252,7 +252,7 @@ const HealthPage = () => {
           </SectionHeading>
           <Text mb={6} opacity={0.85}>
             I&apos;m getting back into training — calisthenics and core, three
-            days a week. This page shows my own numbers, synced from my phone
+            days a week. This page shows my own numbers, synced from my Galaxy Watch
             and cached on the server.
           </Text>
 

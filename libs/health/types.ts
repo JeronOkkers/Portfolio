@@ -1,6 +1,6 @@
 // Provider-neutral shape the Health page renders.
-// Google Fit is the current provider; when Google shuts it down (end of 2026)
-// a Google Health API provider only needs to return this same shape.
+// Current provider: Health Connect (Samsung Health / Galaxy Watch) pushed to
+// /api/health/ingest by the Life Dashboard Companion app and stored in Supabase.
 
 export interface SeriesPoint {
   t: number // epoch ms (start of bucket)

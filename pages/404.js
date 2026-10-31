@@ -11,11 +11,11 @@ const NotFound = () => {
     return (
         <Container>
             <Heading as="h1">Not Found</Heading>
-            <Text>The Page you are looking for was not found.</Text>
+            <Text>This page drifted off into orbit — it doesn&apos;t exist (anymore).</Text>
             <Divider my={6}/>
             <Box m={6} align="center">
                 <NextLink href="/" legacyBehavior>
-                <Button colorScheme="teal">Return to Home</Button>
+                <Button colorScheme="orange">Return to Home</Button>
                 </NextLink>
             </Box>
         </Container>

@@ -1,19 +1,17 @@
-// Import statements remain unchanged...
 import React, { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import NextLink from 'next/link'
 import {
   Box,
-  Heading,
   Text,
   SimpleGrid,
   Button,
-  VStack,
-  useColorModeValue,
+  Container,
   Spinner,
-  Alert,
-  AlertIcon,
-  Progress
+  Progress,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  useColorModeValue
 } from '@chakra-ui/react'
 import {
   Chart as ChartJS,
@@ -21,391 +19,264 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  Title,
+  BarElement,
   Tooltip,
-  Legend
+  Filler
 } from 'chart.js'
-import { Line } from 'react-chartjs-2'
+import { Line, Bar } from 'react-chartjs-2'
 import Layout from '../components/layouts/article'
 import Section from '../components/section'
+import SectionHeading from '../components/section-heading'
+import type {
+  HealthNotConfigured,
+  HealthResponse,
+  HealthSummary, SeriesPoint, SleepStage } from '../libs/health/types'
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Filler)
 
-// Interfaces remain unchanged...
-interface DataPoint {
-  startTimeNanos: string
-  endTimeNanos?: string
-  value: Array<{ intVal?: string; fpVal?: number; mapVal?: any[] }>
+const fmtDuration = (ms: number) => {
+  const m = Math.round(ms / 60000)
+  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`
 }
 
-interface GoogleFitData {
-  stepsData?: { point?: DataPoint[] }
-  heartRateData?: { point?: DataPoint[] }
-  restingHeartRateData?: { point?: DataPoint[] } | null
-  sleepData?: { point?: DataPoint[] } | null
-  oxygenData?: { point?: DataPoint[] } | null
+// Format times in the owner's timezone, regardless of where the visitor is
+const fmtTime = (t: number, offsetMin: number) => {
+  const d = new Date(t + offsetMin * 60000)
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+}
+
+const STAGE_META: { key: SleepStage; label: string; color: string }[] = [
+  { key: 'deep', label: 'Deep', color: '#553c9a' },
+  { key: 'light', label: 'Light', color: '#805ad5' },
+  { key: 'rem', label: 'REM', color: '#b794f4' },
+  { key: 'asleep', label: 'Asleep', color: '#9f7aea' },
+  { key: 'awake', label: 'Awake', color: '#f6ad55' }
+]
+
+const Card = ({ children, ...rest }: any) => {
+  return (
+    <Box bg="var(--card)" border="1px solid var(--line)" borderRadius="xl" p={4} {...rest}>
+      {children}
+    </Box>
+  )
+}
+
+const StatCard = ({ label, value, help }: { label: string; value: string; help?: string }) => (
+  <Card>
+    <Stat>
+      <StatLabel opacity={0.8}>{label}</StatLabel>
+      <StatNumber fontSize="2xl">{value}</StatNumber>
+      {help && <StatHelpText mb={0}>{help}</StatHelpText>}
+    </Stat>
+  </Card>
+)
+
+const chartOptions = (gridColor: string) => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+    y: { grid: { color: gridColor }, beginAtZero: false }
+  }
+})
+
+const series = (points: SeriesPoint[], offset: number) => ({
+  labels: points.map(p => fmtTime(p.t, offset)),
+  values: points.map(p => p.v)
+})
+
+const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => void }) => {
+  const off = data.timezoneOffsetMinutes
+  const accent =
+    typeof window !== 'undefined'
+      ? getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#d2452f'
+      : '#d2452f'
+  const gridColor = useColorModeValue('rgba(0,0,0,0.06)', 'rgba(255,255,255,0.08)')
+  const steps = series(data.steps.hourly, off)
+  const hr = series(data.heartRate.hourly, off)
+  const sleep = data.sleep
+  const hrv = data.heartRate
+  const stepPct = Math.min(100, (data.steps.today / data.steps.goal) * 100)
+
+  return (
+    <>
+      <SimpleGrid columns={[2, 2, 4]} spacing={3} mb={4}>
+        <StatCard
+          label="Steps today"
+          value={data.steps.today.toLocaleString('en-ZA')}
+          help={`${Math.round(stepPct)}% of ${data.steps.goal.toLocaleString('en-ZA')}`}
+        />
+        <StatCard
+          label="Sleep"
+          value={sleep ? fmtDuration(sleep.asleepMs) : '—'}
+          help={sleep ? `${fmtTime(sleep.start, off)} → ${fmtTime(sleep.end, off)}` : 'No sleep logged'}
+        />
+        <StatCard
+          label="Heart rate"
+          value={hrv.latest ? `${hrv.latest} bpm` : '—'}
+          help={hrv.average ? `avg ${Math.round(hrv.average)} bpm (24h)` : undefined}
+        />
+        <StatCard
+          label="Resting HR"
+          value={hrv.resting ? `${Math.round(hrv.resting)} bpm` : '—'}
+          help={data.oxygen.average ? `SpO₂ ${data.oxygen.average}%` : undefined}
+        />
+      </SimpleGrid>
+
+      <Card mb={4}>
+        <Text fontWeight="bold" mb={2}>
+          Step goal
+        </Text>
+        <Progress value={stepPct} sx={{ "& > div": { bg: "var(--accent)" } }} bg="var(--line)" size="sm" borderRadius="md" />
+      </Card>
+
+      {sleep && (
+        <Card mb={4}>
+          <Text fontWeight="bold" mb={1}>
+            Last night
+          </Text>
+          <Text fontSize="sm" opacity={0.75} mb={3}>
+            {fmtDuration(sleep.asleepMs)} asleep · {fmtDuration(sleep.inBedMs)} in bed
+            {sleep.source === 'session' && ' · no stage data recorded'}
+          </Text>
+          {sleep.source === 'segments' && (
+            <>
+              <Box display="flex" h="14px" borderRadius="full" overflow="hidden" mb={2}>
+                {STAGE_META.filter(s => sleep.stages[s.key]).map(s => (
+                  <Box
+                    key={s.key}
+                    bg={s.color}
+                    flexGrow={sleep.stages[s.key]}
+                    title={`${s.label}: ${fmtDuration(sleep.stages[s.key] || 0)}`}
+                  />
+                ))}
+              </Box>
+              <SimpleGrid columns={[2, 4]} spacing={1} fontSize="sm">
+                {STAGE_META.filter(s => sleep.stages[s.key]).map(s => (
+                  <Box key={s.key} display="flex" alignItems="center" gap={2}>
+                    <Box w="10px" h="10px" borderRadius="sm" bg={s.color} />
+                    {s.label} {fmtDuration(sleep.stages[s.key] || 0)}
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </>
+          )}
+        </Card>
+      )}
+
+      <SimpleGrid columns={[1, 1, 2]} spacing={4} mb={4}>
+        <Card>
+          <Text fontWeight="bold" mb={2}>
+            Steps by hour (today)
+          </Text>
+          <Box h="200px">
+            {steps.values.some(v => v > 0) ? (
+              <Bar
+                options={chartOptions(gridColor) as any}
+                data={{
+                  labels: steps.labels,
+                  datasets: [{ data: steps.values, backgroundColor: accent, borderRadius: 4 }]
+                }}
+              />
+            ) : (
+              <Text opacity={0.6}>No steps yet today.</Text>
+            )}
+          </Box>
+        </Card>
+        <Card>
+          <Text fontWeight="bold" mb={2}>
+            Heart rate (last 24h)
+          </Text>
+          <Box h="200px">
+            {hr.values.length ? (
+              <Line
+                options={chartOptions(gridColor) as any}
+                data={{
+                  labels: hr.labels,
+                  datasets: [
+                    {
+                      data: hr.values,
+                      borderColor: '#e53e3e',
+                      backgroundColor: 'rgba(229,62,62,0.12)',
+                      fill: true,
+                      tension: 0.35,
+                      pointRadius: 0
+                    }
+                  ]
+                }}
+              />
+            ) : (
+              <Text opacity={0.6}>No heart rate data.</Text>
+            )}
+          </Box>
+        </Card>
+      </SimpleGrid>
+
+      <Text fontSize="xs" opacity={0.6} textAlign="center">
+        From {data.provider} · updated {fmtTime(data.generatedAt, off)} SAST
+        {data.warnings.length > 0 && ` · unavailable: ${data.warnings.join(', ')}`}
+        {' · '}
+        <Button size="xs" variant="link" onClick={onRefresh}>
+          refresh
+        </Button>
+      </Text>
+    </>
+  )
 }
 
 const HealthPage = () => {
-  const router = useRouter()
-  const { access_token } = router.query
+  const [data, setData] = useState<HealthResponse | null>(null)
+  const [error, setError] = useState(false)
 
-  const [fetchedData, setFetchedData] = useState<GoogleFitData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const cardBg = useColorModeValue('gray.100', 'gray.800')
-  const textColor = useColorModeValue('gray.800', 'whiteAlpha.900')
-
-  const fetchHealthData = async (token: string) => {
-    setLoading(true)
-    setError(null)
+  const load = async () => {
+    setError(false)
     try {
-      const res = await fetch(`/api/google-fit/data?access_token=${token}`)
-      if (!res.ok) {
-        throw new Error('Failed to fetch data from Google Fit API.')
-      }
-      const data = await res.json()
-      console.log('Fetched Google Fit data:', data)
-      setFetchedData(data)
-    } catch (err: any) {
-      console.error('Error fetching data:', err)
-      setError(err.message)
-    } finally {
-      setLoading(false)
+      const res = await fetch('/api/health/summary')
+      setData(await res.json())
+    } catch {
+      setError(true)
     }
   }
 
   useEffect(() => {
-    if (access_token && typeof access_token === 'string') {
-      fetchHealthData(access_token)
-    }
-  }, [access_token])
-
-  // --- Data Parsers ---
-  const getTotalSteps = () => {
-    const points = fetchedData?.stepsData?.point || []
-    const today = new Date()
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
-    const endOfDay = startOfDay + 24 * 60 * 60 * 1000
-
-    return points.reduce((acc: number, curr: DataPoint) => {
-      const startTimeMs = parseInt(curr.startTimeNanos, 10) / 1e6
-      if (startTimeMs >= startOfDay && startTimeMs < endOfDay) {
-        return acc + parseInt(curr.value[0]?.intVal || '0', 10)
-      }
-      return acc
-    }, 0)
-  }
-
-  const getMostRecentHeartRate = () => {
-    const points = fetchedData?.heartRateData?.point || []
-    if (points.length === 0) return 0
-    // Assuming the data is sorted by time, the most recent will be the last element.
-    const mostRecentPoint = points[points.length - 1]
-    return mostRecentPoint.value[0]?.fpVal || 0
-  }
-
-
-  const getAverageHeartRate = () => {
-    const points = fetchedData?.heartRateData?.point || []
-    if (points.length === 0) return 0
-    const total = points.reduce((acc: number, curr: DataPoint) => {
-      return acc + (curr.value[0]?.fpVal ?? 0)
-    }, 0)
-    return total / points.length
-  }
-
-  const getAverageRestingHr = () => {
-    const points = fetchedData?.restingHeartRateData?.point || []
-    if (points.length === 0) return 0
-    const total = points.reduce((acc: number, curr: DataPoint) => {
-      return acc + (curr.value[0]?.fpVal ?? 0)
-    }, 0)
-    return total / points.length
-  }
-
-  const getTotalSleepDuration = () => {
-    const points = fetchedData?.sleepData?.point || []
-    let totalNanos = 0
-    points.forEach((point) => {
-      if (point.endTimeNanos && parseInt(point.value[0]?.intVal || '0', 10) !== 1) {
-        const start = parseInt(point.startTimeNanos, 10)
-        const end = parseInt(point.endTimeNanos, 10)
-        totalNanos += end - start
-      }
-    })
-    return totalNanos / 1e6
-  }
-
-  const formatSleepDuration = (ms: number) => {
-    if (ms <= 0) return 'No data'
-    const totalMinutes = Math.floor(ms / 60000)
-    const hours = Math.floor(totalMinutes / 60)
-    const minutes = totalMinutes % 60
-    return `${hours}h ${minutes}m`
-  }
-
-  const getAverageOxygenSaturation = () => {
-    const points = fetchedData?.oxygenData?.point || []
-    if (points.length === 0) return 0
-    const total = points.reduce((acc: number, curr: DataPoint) => {
-      return acc + (curr.value[0]?.fpVal ?? 0)
-    }, 0)
-    return total / points.length
-  }
-
-  // --- Chart Data for Steps ---
-  const stepsChartData = () => {
-    const points = fetchedData?.stepsData?.point || []
-    if (points.length === 0) return null
-
-    const labels = points.map((point) => {
-      const timeInMs = parseInt(point.startTimeNanos, 10) / 1e6
-      return new Date(timeInMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    })
-    const dataPoints = points.map((point) =>
-      parseInt(point.value[0]?.intVal || '0', 10)
-    )
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Steps',
-          data: dataPoints,
-          fill: false,
-          borderColor: '#319795',
-          backgroundColor: '#319795',
-          tension: 0.1
-        }
-      ]
-    }
-  }
-
-  // --- Chart Data for Oxygen Saturation ---
-  const oxygenChartData = () => {
-    const points = fetchedData?.oxygenData?.point || []
-    if (points.length === 0) return null
-
-    const labels = points.map((point) => {
-      const timeInMs = parseInt(point.startTimeNanos, 10) / 1e6
-      return new Date(timeInMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    })
-    const dataPoints = points.map((point) => point.value[0]?.fpVal ?? 0)
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Oxygen Saturation (%)',
-          data: dataPoints,
-          fill: false,
-          borderColor: '#805AD5',
-          backgroundColor: '#D6BCFA',
-          tension: 0.1
-        }
-      ]
-    }
-  }
-
-  // --- Chart Data for Heart Rate ---
-  const hrChartData = () => {
-    const points = fetchedData?.heartRateData?.point || []
-    if (points.length === 0) return null
-
-    const labels = points.map((point) => {
-      const timeInMs = parseInt(point.startTimeNanos, 10) / 1e6
-      return new Date(timeInMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    })
-
-    const dataPoints = points.map((point) => point.value[0]?.fpVal ?? 0)
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Heart Rate (bpm)',
-          data: dataPoints,
-          fill: false,
-          borderColor: '#E53E3E',
-          backgroundColor: '#FEB2B2',
-          tension: 0.1
-        }
-      ]
-    }
-  }
-
-  const stepsToday = getTotalSteps()
-  const avgHR = getAverageHeartRate()
-  const rctHR = getMostRecentHeartRate()
-  const restingHR = getAverageRestingHr()
-  const totalSleepMs = getTotalSleepDuration()
-  const avgOxygen = getAverageOxygenSaturation()
+    load()
+  }, [])
 
   return (
-    <Layout title="Health Dashboard">
-      <Section delay={0.1}>
-        <Heading
-          as="h1"
-          mb={6}
-          fontSize="3xl"
-          color={useColorModeValue('teal.600', 'teal.300')}
-        >
-          Health Dashboard
-        </Heading>
+    <Layout title="Health">
+      <Container>
+        <Section delay={0.1}>
+          <SectionHeading eyebrow="Health">
+            Keeping the <em>body</em> running too.
+          </SectionHeading>
+          <Text mb={6} opacity={0.85}>
+            I&apos;m getting back into training — calisthenics and core, three
+            days a week. This page shows my own numbers, synced from my phone
+            and cached on the server.
+          </Text>
 
-        {!access_token && (
-          <VStack spacing={4} mb={8}>
-            <Text>Please connect your Google Fit account to sync your health data.</Text>
-            <NextLink href="/api/google-fit/auth" passHref legacyBehavior>
-              <Button as="a" colorScheme="teal">
-                Connect to Google Fit
-              </Button>
-            </NextLink>
-          </VStack>
-        )}
-
-        {error && (
-          <Alert status="error" mb={4}>
-            <AlertIcon />
-            {error}
-          </Alert>
-        )}
-
-        {loading && <Spinner size="xl" color="teal.400" />}
-
-        {access_token && !loading && !error && fetchedData && (
-          <>
-            {/* Main Stats Row */}
-            <SimpleGrid columns={[1, 2, 4]} spacing={4} mb={8}>
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-                <Text fontWeight="bold" mb={1} color={textColor}>Heart Rate</Text>
-                <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
-                  {rctHR ? `${rctHR.toFixed(1)} bpm` : 'No data'}
-                </Text>
-              </Box>
-
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-                <Text fontWeight="bold" mb={1} color={textColor}>Avg Heart Rate</Text>
-                <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
-                  {avgHR ? `${avgHR.toFixed(1)} bpm` : 'No data'}
-                </Text>
-              </Box>
-
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-                <Text fontWeight="bold" mb={1} color={textColor}>Steps</Text>
-                <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
-                  {stepsToday ? stepsToday : 'No data'}
-                </Text>
-              </Box>
-
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-                <Text fontWeight="bold" mb={1} color={textColor}>Sleep</Text>
-                <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
-                  {formatSleepDuration(totalSleepMs)}
-                </Text>
-              </Box>
-
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-                <Text fontWeight="bold" mb={1} color={textColor}>Stress Level</Text>
-                <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
-                  No data
-                </Text>
-              </Box>
-            </SimpleGrid>
-
-            <SimpleGrid columns={[1, 2]} spacing={4} mb={8}>
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-                <Text fontWeight="bold" mb={1} color={textColor}>Resting Heart Rate</Text>
-                <Text fontSize="2xl" fontWeight="semibold" color="teal.300">
-                  {restingHR > 0 ? `${restingHR.toFixed(1)} bpm` : 'No data'}
-                </Text>
-              </Box>
-
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-                <Text fontWeight="bold" mb={1} color={textColor}>Oxygen Saturation</Text>
-                <Text fontSize="2xl" fontWeight="semibold" color="purple.400">
-                  {avgOxygen ? `${avgOxygen.toFixed(1)}%` : 'No data'}
-                </Text>
-              </Box>
-            </SimpleGrid>
-
-            {stepsChartData() ? (
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} mb={8}>
-                <Heading as="h2" fontSize="xl" mb={4} color={textColor}>
-                  Steps Over the Last 24 Hours
-                </Heading>
-                <Line data={stepsChartData()} />
-              </Box>
-            ) : (
-              <Text color={textColor} mb={8}>
-                No step data available for the selected time range.
-              </Text>
-            )}
-
-            {hrChartData() ? (
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} mb={8}>
-                <Heading as="h2" fontSize="xl" mb={4} color={textColor}>
-                  Heart Rate Over the Last 24 Hours
-                </Heading>
-                <Line data={hrChartData()} />
-              </Box>
-            ) : (
-              <Text color={textColor} mb={8}>
-                No heart rate data available for the selected time range.
-              </Text>
-            )}
-
-            {oxygenChartData() ? (
-              <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} mb={8}>
-                <Heading as="h2" fontSize="xl" mb={4} color={textColor}>
-                  Oxygen Saturation Over the Last 24 Hours
-                </Heading>
-                <Line data={oxygenChartData()} />
-              </Box>
-            ) : (
-              <Text color={textColor} mb={8}>
-                No oxygen saturation data available for the selected time range.
-              </Text>
-            )}
-
-            <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center" mb={8}>
-              <Text color={textColor} mb={2}>Steps Goal (10,000)</Text>
-              <Progress
-                value={(stepsToday / 10000) * 100}
-                colorScheme="teal"
-                size="sm"
-                borderRadius="md"
-              />
-              <Text color={textColor} fontSize="sm" mt={2}>
-                {`${stepsToday} / 10,000 steps`}
-              </Text>
+          {!data && !error && (
+            <Box textAlign="center" py={10}>
+              <Spinner size="xl" color="var(--accent)" />
             </Box>
-
-            <Box bg={cardBg} rounded="lg" boxShadow="md" p={4} textAlign="center">
-              <Button
-                onClick={() =>
-                  access_token && fetchHealthData(access_token.toString())
-                }
-                colorScheme="teal"
-              >
-                Sync Again
-              </Button>
-            </Box>
-          </>
-        )}
-      </Section>
+          )}
+          {error && <Text>Couldn&apos;t load health data right now.</Text>}
+          {data && data.configured === false && (
+            <Card textAlign="center" py={8}>
+              <Text fontWeight="bold">Live stats are offline</Text>
+              <Text fontSize="sm" opacity={0.75}>
+                {(data as HealthNotConfigured).reason}
+              </Text>
+            </Card>
+          )}
+          {data && data.configured === true && (
+            <Dashboard data={data as HealthSummary} onRefresh={load} />
+          )}
+        </Section>
+      </Container>
     </Layout>
-  );
+  )
 }
 
 export default HealthPage

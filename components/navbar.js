@@ -1,125 +1,137 @@
 import { forwardRef } from 'react'
-import Logo from './logo'
 import NextLink from 'next/link'
+import Image from 'next/image'
 import {
   Container,
   Box,
   Link,
-  Stack,
-  Heading,
-  Flex,
+  HStack,
+  Text,
   Menu,
   MenuItem,
   MenuList,
   MenuButton,
   IconButton,
-  useColorModeValue
+  Button
 } from '@chakra-ui/react'
 import { HamburgerIcon } from '@chakra-ui/icons'
 import ThemeToggleButton from './theme-toggle-button'
 
-const LinkItem = ({ href, path, target, children, ...props }) => {
-  const active = path === href
-  const inactiveColor = useColorModeValue('gray.800', 'whiteAlpha.900')
+const links = [
+  { href: '/works', label: 'Work' },
+  { href: '/#now', label: 'Now' },
+  { href: '/health', label: 'Health' }
+]
+
+const NavLink = ({ href, path, children }) => {
+  const active = href.startsWith('/') && !href.includes('#') && (path === href || path.startsWith(href + '/'))
   return (
     <Link
       as={NextLink}
       href={href}
       scroll={false}
-      p={2}
-      bg={active ? 'grassTeal' : undefined}
-      color={active ? '#202023' : inactiveColor}
-      target={target}
-      {...props}
+      fontSize="sm"
+      color={active ? 'var(--ink)' : 'var(--ink-soft)'}
+      fontWeight={active ? 600 : 400}
+      _hover={{ color: 'var(--ink)', textDecoration: 'none' }}
+      position="relative"
+      _after={
+        active
+          ? {
+              content: '""',
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: '-6px',
+              height: '2px',
+              bg: 'var(--accent)'
+            }
+          : undefined
+      }
     >
       {children}
     </Link>
   )
 }
 
-const MenuLink = forwardRef((props, ref) => (
-  <Link ref={ref} as={NextLink} {...props} />
-));
+const MenuLink = forwardRef((props, ref) => <Link ref={ref} as={NextLink} {...props} />)
+MenuLink.displayName = 'MenuLink'
 
-MenuLink.displayName = 'MenuLink';
-
-const Navbar = props => {
-  const { path } = props
-
-  return (
-    <Box
-      position="fixed"
-      as="nav"
-      w="100%"
-      bg={useColorModeValue('#ffffff40', '#20202380')}
-      css={{ backdropFilter: 'blur(10px)' }}
-      zIndex={2}
-      {...props}
-    >
-      <Container
-        display="flex"
-        p={2}
-        maxW="container.md"
-        wrap="wrap"
-        align="center"
-        justify="space-between"
-      >
-        <Flex align="center" mr={5}>
-          <Heading as="h1" size="lg" letterSpacing={'tighter'}>
-            <Logo />
-          </Heading>
-        </Flex>
-
-        <Stack
-          direction={{ base: 'column', md: 'row' }}
-          display={{ base: 'none', md: 'flex' }}
-          width={{ base: 'full', md: 'auto' }}
-          alignItems="center"
-          flexGrow={1}
-          mt={{ base: 4, md: 0 }}
-        >
-          <LinkItem href="/works" path={path}>
-            Works
-          </LinkItem>
-          <LinkItem href="/posts" path={path}>
-            Post
-          </LinkItem>
-          <LinkItem href="/health" path={path}>
-            Health
-          </LinkItem>
-        </Stack>
-
-        <Box flex={1} align="right">
-          <ThemeToggleButton />
-
-          <Box ml={2} display={{ base: 'inline-block', md: 'none' }}>
-            <Menu isLazy id="navbar-menu">
-              <MenuButton
-                as={IconButton}
-                icon={<HamburgerIcon />}
-                variant="outline"
-                aria-label="Options"
-              />
-              <MenuList>
-                <MenuItem as={MenuLink} href="/">
-                  About
-                </MenuItem>
-                <MenuItem as={MenuLink} href="/works">
-                  Works
-                </MenuItem>
-                <MenuItem as={MenuLink} href="/posts">
-                  Posts
-                </MenuItem>
-                <MenuItem as={MenuLink} href="/health">
-                  Health
-                </MenuItem>
-              </MenuList>
-            </Menu>
-          </Box>
+const Navbar = ({ path }) => (
+  <Box
+    position="fixed"
+    as="nav"
+    w="100%"
+    zIndex={10}
+    bg="color-mix(in srgb, var(--paper) 78%, transparent)"
+    css={{ backdropFilter: 'blur(12px)' }}
+    borderBottom="1px solid var(--line)"
+  >
+    <Container maxW="container.xl" px={[4, 6, 8]} py={3} display="flex" alignItems="center">
+      <Link as={NextLink} href="/" _hover={{ textDecoration: 'none' }} display="flex" alignItems="center" gap={2}>
+        <Box borderRadius="full" overflow="hidden" w="26px" h="26px">
+          <Image src="/images/mark.png" width={26} height={26} alt="" />
         </Box>
-      </Container>
-    </Box>
-  )
-}
+        <Text fontFamily="heading" fontSize="xl" color="var(--ink)">
+          Jeron Okkers
+        </Text>
+      </Link>
+
+      <HStack spacing={8} ml="auto" display={{ base: 'none', md: 'flex' }}>
+        {links.map(l => (
+          <NavLink key={l.href} href={l.href} path={path}>
+            {l.label}
+          </NavLink>
+        ))}
+        <Link
+          href="https://github.com/JeronOkkers"
+          target="_blank"
+          fontSize="sm"
+          color="var(--ink-soft)"
+          _hover={{ color: 'var(--ink)', textDecoration: 'none' }}
+        >
+          GitHub ↗
+        </Link>
+      </HStack>
+
+      <HStack spacing={2} ml={{ base: 'auto', md: 6 }}>
+        <ThemeToggleButton />
+        <Button
+          as={NextLink}
+          href="/works"
+          variant="ink"
+          size="sm"
+          px={4}
+          display={{ base: 'none', md: 'inline-flex' }}
+        >
+          See my work
+        </Button>
+        <Box display={{ base: 'inline-block', md: 'none' }}>
+          <Menu isLazy id="navbar-menu">
+            <MenuButton
+              as={IconButton}
+              icon={<HamburgerIcon />}
+              variant="outline"
+              borderColor="var(--line)"
+              aria-label="Menu"
+              borderRadius="full"
+            />
+            <MenuList bg="var(--card)" borderColor="var(--line)">
+              <MenuItem as={MenuLink} href="/" bg="transparent">Home</MenuItem>
+              {links.map(l => (
+                <MenuItem key={l.href} as={MenuLink} href={l.href} bg="transparent">
+                  {l.label}
+                </MenuItem>
+              ))}
+              <MenuItem as={Link} href="https://github.com/JeronOkkers" target="_blank" bg="transparent">
+                GitHub ↗
+              </MenuItem>
+            </MenuList>
+          </Menu>
+        </Box>
+      </HStack>
+    </Container>
+  </Box>
+)
 
 export default Navbar

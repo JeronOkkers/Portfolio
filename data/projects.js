@@ -75,10 +75,10 @@ const projects = [
     year: '2023–',
     status: 'live',
     summary:
-      'The site you are on — Next.js, Chakra UI, a procedural Three.js planet and a live health dashboard.',
+      'The site you are on — Next.js, Chakra UI, a hand-built voxel scene in Three.js and a live health dashboard.',
     description: [
       'Started from a template in 2023 and rebuilt in 2026 to reflect where I actually am now.',
-      'The planet on the home page is generated in code with Three.js (no 3D model file). The Health page reads my own fitness data on the server and caches it, so visitors never have to sign in to anything.'
+      'The voxel scene on the home page — my wolf, my desk, a pallet of stock and a dumbbell — is built voxel by voxel in code with Three.js (no 3D model file). The Health page reads my own fitness data on the server and caches it, so visitors never have to sign in to anything.'
     ],
     stack: ['Next.js', 'React', 'Chakra UI', 'Three.js', 'Chart.js', 'Vercel'],
     platform: 'Web',

@@ -5,7 +5,7 @@ import Footer from '../footer'
 import { Box, Container } from '@chakra-ui/react'
 
 // Three.js only runs in the browser
-const Planet = dynamic(() => import('../planet'), { ssr: false })
+const VoxelScene = dynamic(() => import('../voxel-scene'), { ssr: false })
 
 const description =
   'Jeron Okkers — application developer and Computer Science student in Cape Town. Building practical software for warehouses, workforces and the web.'
@@ -30,7 +30,7 @@ const Main = ({ children, router }) => {
       <Navbar path={router.asPath} />
 
       <Container maxW="container.md" pt={14}>
-        {isHome && <Planet />}
+        {isHome && <VoxelScene />}
         {children}
         <Footer />
       </Container>

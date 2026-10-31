@@ -37,14 +37,14 @@ interface Row {
   data: any
 }
 
-export function hourly(rows: Row[], from: number, to: number, mode: 'sum' | 'avg'): SeriesPoint[] {
+export function hourly(rows: Row[], from: number, to: number, mode: 'sum' | 'avg', size = HOUR): SeriesPoint[] {
   const buckets = new Map<number, { sum: number; n: number }>()
-  for (let t = from; t < to; t += HOUR) buckets.set(t, { sum: 0, n: 0 })
+  for (let t = from; t < to; t += size) buckets.set(t, { sum: 0, n: 0 })
   for (const r of rows) {
     if (r.value == null) continue
     const t = ms(r.start_at)
     if (t < from || t >= to) continue
-    const k = from + Math.floor((t - from) / HOUR) * HOUR
+    const k = from + Math.floor((t - from) / size) * size
     const b = buckets.get(k)!
     b.sum += r.value
     b.n++
@@ -105,13 +105,16 @@ export const healthConnectProvider: HealthProvider = {
 
     // Steps
     const stepRows = of('steps')
-    const stepHourly = hourly(stepRows, dayStart, Math.min(now, dayStart + DAY), 'sum')
+    // Samsung Health also writes one 24h summary record; it would pile into the first
+    // hour and double count, so the hourly chart only uses records shorter than 2h.
+    const granular = stepRows.filter(r => !r.end_at || ms(r.end_at) - ms(r.start_at) < 2 * HOUR)
+    const stepHourly = hourly(granular, dayStart, Math.min(now, dayStart + DAY), 'sum')
     const stepSum = stepHourly.reduce((a, p) => a + p.v, 0)
     const today = totals?.steps ?? stepSum // daily total from Health Connect is de-duplicated across apps
 
     // Heart rate (last 24h)
     const hr = of('heart_rate').filter(r => ms(r.start_at) >= now - DAY && r.value != null)
-    const hrHourly = hourly(hr, Math.floor((now - DAY) / HOUR) * HOUR, now, 'avg')
+    const hrHourly = hourly(hr, Math.floor((now - DAY) / (15 * 60_000)) * 15 * 60_000, now, 'avg', 15 * 60_000)
     const hrVals = hr.map(r => r.value as number)
     const latestHr = hr.length ? hr[hr.length - 1].value : null
 

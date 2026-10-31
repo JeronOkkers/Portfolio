@@ -186,7 +186,7 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
         </Card>
         <Card>
           <Text fontWeight="bold" mb={2}>
-            Heart rate (last 24h)
+            Heart rate (last 24h, 15-min avg)
           </Text>
           <Box h="200px">
             {hr.values.length ? (
@@ -201,7 +201,9 @@ const Dashboard = ({ data, onRefresh }: { data: HealthSummary; onRefresh: () => 
                       backgroundColor: 'rgba(229,62,62,0.12)',
                       fill: true,
                       tension: 0.35,
-                      pointRadius: 0
+                      // with only a few readings a line has nothing to join, so show dots
+                      pointRadius: hr.values.length < 8 ? 3 : 0,
+                      pointBackgroundColor: '#e53e3e'
                     }
                   ]
                 }}
